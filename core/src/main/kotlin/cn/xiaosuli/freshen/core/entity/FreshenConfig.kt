@@ -13,18 +13,18 @@ import javax.sql.DataSource
  * @property optimisticLock 乐观锁配置，默认为不启用
  * @property tablePrefix 设置表名的统一前缀，默认为空
  * @property enabledUnderscoreToCamelCase 是否开启下划线驼峰转换，默认启用，会同时作用于表名和字段名
- * @property sqlAudit1 在lambda中传入println或日志工具，以打印SQL，默认为空实现，sql: SQL语句
+ * @property sqlAudit1 在lambda中传入println或日志工具，以打印SQL，默认为空实现，sql: SQL语句，params
  * @property sqlAudit2 在lambda中传入println或日志工具，以打印SQL和执行耗时，默认为空实现，sql: SQL语句，elapsedTime: 整个方法执行耗时,单位ms
  */
-data class FreshenConfig(
+data class FreshenConfig @JvmOverloads constructor(
     val dataSource: DataSource,
     val keyStrategy: KeyStrategy = KeyStrategy.None,
     val logicDelete: LogicDelete = LogicDelete.Disable,
     val optimisticLock: OptimisticLock = OptimisticLock.Disable,
     val tablePrefix: String? = null,
     val enabledUnderscoreToCamelCase: Boolean = true,
-    val sqlAudit1: (sql: String,List<PrepareStatementParam>) -> Unit = {_,_->},
-    val sqlAudit2: (sql: String, List<PrepareStatementParam>?,elapsedTime: Long) -> Unit = { _,_, _ -> }
+    val sqlAudit1: (sql: String,params:List<PrepareStatementParam>) -> Unit = {_,_->},
+    val sqlAudit2: (sql: String,params:List<PrepareStatementParam>?,elapsedTime: Long) -> Unit = { _,_, _ -> }
 )
 
 /**

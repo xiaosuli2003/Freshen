@@ -1,9 +1,3 @@
-@file:JvmName("ConnUtils")
-
-/**
- * 数据库连接工具类
- */
-
 package cn.xiaosuli.freshen.core.utils
 
 import cn.xiaosuli.freshen.core.FreshenRuntimeConfig
@@ -21,7 +15,7 @@ import kotlin.reflect.KProperty1
  * @param R 要反射构造的对象类型
  * @return R?
  */
-inline fun <reified R> ResultSet.getObject(): R? {
+inline fun <reified R> ResultSet.getObject(): R {
     val noArgsConstructor = R::class.constructors.firstOrNull { it.parameters.isEmpty() }
     return if (noArgsConstructor == null) {
         // 走有参构造对象
@@ -67,8 +61,8 @@ inline fun <reified R> ResultSet.getObjForHasArgsConstructor(): R {
  * @param R 要反射构造的对象类型
  * @return R?
  */
-inline fun <reified R> ResultSet.getObjForNoArgsConstructor(): R? {
-    val entity = R::class.constructors.firstOrNull { it.parameters.isEmpty() }?.call()
+inline fun <reified R> ResultSet.getObjForNoArgsConstructor(): R {
+    val entity = R::class.constructors.firstOrNull { it.parameters.isEmpty() }!!.call()
     R::class.members.filterIsInstance<KProperty1<R, *>>().forEach { kProperty1 ->
         val kmp = kProperty1 as KMutableProperty1<R, *>
         // TODO: 这里的映射还需要修改，或添加

@@ -9,9 +9,9 @@ import kotlin.reflect.KProperty1
  *
  * @param T 表对应的实体类
  */
-abstract class ConditionBuilder<T>:SQLBuilder {
+abstract class ConditionBuilder<T> : SQLBuilder {
     var where = ""
-    var queryCondition:String = ""
+    var queryCondition: String = ""
 
     /**
      * 构建where子句
@@ -40,7 +40,26 @@ abstract class ConditionBuilder<T>:SQLBuilder {
      * @param value 等于的值
      * @return
      */
-    infix fun <V> KProperty1<T, V>.eq(value: V): String {
-        return "${name.toUnderscore()} = \"$value\""
-    }
+    infix fun <V> KProperty1<T, V>.eq(value: V): String =
+        "${name.toUnderscore()} = \"$value\""
+
+    /**
+     * in
+     *
+     * @param V
+     * @param value 等于的值
+     * @return
+     */
+    infix fun <V> KProperty1<T, V>.`in`(range: IntRange): String =
+        "${name.toUnderscore()} between ${range.first} and ${range.last} "
+
+    /**
+     * =等于
+     *
+     * @param V
+     * @param value 等于的值
+     * @return
+     */
+    infix fun <V> KProperty1<T, V>.notIn(value: V): String =
+        "${name.toUnderscore()} = \"$value\""
 }

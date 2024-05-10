@@ -1,8 +1,3 @@
-/**
- * 启动 Freshen
- * @author xiaosuli
- * @date 2024-05-07
- */
 package cn.xiaosuli.freshen.core
 
 import cn.xiaosuli.freshen.core.entity.FreshenConfig
