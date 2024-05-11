@@ -70,7 +70,7 @@ open class QueryBuilder<T : Any> : ConditionBuilder<T>() {
      *
      * @return 所有字段集合
      */
-    fun KClass<T>.full(): List<String> = memberProperties.map { it.name.toUnderscore() }
+    fun KClass<T>.all(): List<String> = memberProperties.map { it.name.toUnderscore() }
 
     /**
      * 设置要查询的表

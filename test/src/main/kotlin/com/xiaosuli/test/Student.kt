@@ -1,5 +1,6 @@
 package com.xiaosuli.test
 
+import cn.xiaosuli.freshen.core.anno.Table
 import java.time.LocalDateTime
 
 class Student {
@@ -13,3 +14,13 @@ class Student {
         return "Student(id=$id, name=$name, gender=$gender, birthday=$birthday, phoneNumber=$phoneNumber, address=$address)"
     }
 }
+
+@Table("tb_student")
+data class Student2 (
+    val id: Long,
+    val name: String,
+    val gender: String,
+    val birthday: LocalDateTime,
+    val phoneNumber: String,
+    val address: String? = null
+)

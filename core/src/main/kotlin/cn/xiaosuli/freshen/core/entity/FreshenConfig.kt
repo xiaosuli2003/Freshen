@@ -1,6 +1,13 @@
 package cn.xiaosuli.freshen.core.entity
 
+import java.math.BigDecimal
+import java.sql.JDBCType
+import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.LocalTime
 import javax.sql.DataSource
+import kotlin.reflect.KClass
+import kotlin.reflect.jvm.internal.impl.renderer.ClassifierNamePolicy.SHORT
 
 /**
  * Freshen 配置类
@@ -13,18 +20,39 @@ import javax.sql.DataSource
  * @property optimisticLock 乐观锁配置，默认为不启用
  * @property tablePrefix 设置表名的统一前缀，默认为空
  * @property enabledUnderscoreToCamelCase 是否开启下划线驼峰转换，默认启用，会同时作用于表名和字段名
+ * @property kTypeAndJDBCTypeMap kType和JDBCType的映射器，默认使用defaultKTypeAndJDBCTypeMap
  * @property sqlAudit1 在lambda中传入println或日志工具，以打印SQL，默认为空实现，sql: SQL语句，params
  * @property sqlAudit2 在lambda中传入println或日志工具，以打印SQL和执行耗时，默认为空实现，sql: SQL语句，elapsedTime: 整个方法执行耗时,单位ms
  */
-data class FreshenConfig @JvmOverloads constructor(
+data class FreshenConfig(
     val dataSource: DataSource,
     val keyStrategy: KeyStrategy = KeyStrategy.None,
     val logicDelete: LogicDelete = LogicDelete.Disable,
     val optimisticLock: OptimisticLock = OptimisticLock.Disable,
     val tablePrefix: String? = null,
     val enabledUnderscoreToCamelCase: Boolean = true,
+    val kTypeAndJDBCTypeMap: Map<KClass<*>, JDBCType> = defaultKTypeAndJDBCTypeMap,
     val sqlAudit1: (sql: String,params:List<PrepareStatementParam>) -> Unit = {_,_->},
     val sqlAudit2: (sql: String,params:List<PrepareStatementParam>?,elapsedTime: Long) -> Unit = { _,_, _ -> }
+)
+
+/**
+ * 默认的kType和JDBCType的映射器
+ */
+val defaultKTypeAndJDBCTypeMap:Map<KClass<*>, JDBCType> = mapOf(
+Int::class to JDBCType.INTEGER,
+Long::class to JDBCType.BIGINT,
+SHORT::class to JDBCType.SMALLINT,
+Byte::class to JDBCType.TINYINT,
+Float::class to JDBCType.FLOAT,
+Double::class to JDBCType.DOUBLE,
+Boolean::class to JDBCType.BOOLEAN,
+Char::class to JDBCType.CHAR,
+String::class to JDBCType.VARCHAR,
+LocalDate::class to JDBCType.DATE,
+LocalDateTime::class to JDBCType.TIMESTAMP,
+LocalTime::class to JDBCType.TIME,
+BigDecimal::class to JDBCType.DECIMAL,
 )
 
 /**

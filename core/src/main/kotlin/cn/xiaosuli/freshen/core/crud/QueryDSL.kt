@@ -7,32 +7,42 @@ import cn.xiaosuli.freshen.core.utils.closeAndAudit
 import cn.xiaosuli.freshen.core.utils.getObject
 import cn.xiaosuli.freshen.core.utils.setParams
 import java.sql.Connection
+import java.sql.JDBCType
 import java.sql.PreparedStatement
 import java.sql.ResultSet
+import kotlin.reflect.KProperty1
 
 /**
  * 查询多条记录
  *
+ * @param typeMap kType和JDBCType的映射器
  * @param init 在这里构建查询语句
  * @return List<T>
  */
-inline fun <reified T : Any> query(noinline init: (QueryBuilder<T>.() -> Unit)? = null): List<T> {
+inline fun <reified T : Any> query(
+    typeMap:Map<KProperty1<*, *>,JDBCType>?=null,
+    noinline init: (QueryBuilder<T>.() -> Unit)? = null
+): List<T> {
     val start = System.currentTimeMillis()
     val queryBuilder = QueryBuilder<T>()
     queryBuilder.from<T>()
     init?.invoke(queryBuilder)
     val (sql, params) = queryBuilder.build()
     FreshenRuntimeConfig.sqlAudit1(sql, params)
-    return executeQueryAndResultList<T>(sql, params, start)
+    return executeQueryAndResultList<T>(sql, params, typeMap,start)
 }
 
 /**
  * 查询一条记录
  *
+ * @param typeMap kType和JDBCType的映射器
  * @param init 在这里构建查询语句
  * @return List<T>
  */
-inline fun <reified T : Any> queryOne(noinline init: (QueryBuilder<T>.() -> Unit)? = null): T? {
+inline fun <reified T : Any> queryOne(
+    typeMap:Map<KProperty1<*, *>,JDBCType>?=null,
+    noinline init: (QueryBuilder<T>.() -> Unit)? = null
+): T? {
     val start = System.currentTimeMillis()
     val queryBuilder = QueryBuilder<T>()
     queryBuilder.from<T>()
@@ -41,7 +51,7 @@ inline fun <reified T : Any> queryOne(noinline init: (QueryBuilder<T>.() -> Unit
     queryBuilder.limit(1)
     val (sql, params) = queryBuilder.build()
     FreshenRuntimeConfig.sqlAudit1(sql, params)
-    return executeQueryAndResult<T>(sql, params, start)
+    return executeQueryAndResult<T>(sql, params, typeMap,start)
 }
 
 /**
@@ -49,17 +59,19 @@ inline fun <reified T : Any> queryOne(noinline init: (QueryBuilder<T>.() -> Unit
  *
  * @param sql SQL语句
  * @param params 参数列表
+* @param typeMap 属性（列）和JDBCType的映射
  * @param start 开始时间
  * @return T
  */
 inline fun <reified R : Any> executeQueryAndResult(
     sql: String,
     params: List<PrepareStatementParam>? = null,
+    typeMap:Map<KProperty1<*, *>, JDBCType>?=null,
     start: Long
 ): R? {
     val (connection, statement, resultSet) = executeQuery(sql, params)
     val entity = if (resultSet.next()) {
-        resultSet.getObject<R>()
+        resultSet.getObject<R>(typeMap)
     } else null
     connection.closeAndAudit(statement, resultSet, sql, params, start)
     return entity
@@ -70,19 +82,21 @@ inline fun <reified R : Any> executeQueryAndResult(
  *
  * @param sql SQL语句
  * @param params 参数列表
+ * @param typeMap 属性（列）和JDBCType的映射
  * @param start 开始时间
  * @return List<R>
  */
 inline fun <reified R : Any> executeQueryAndResultList(
     sql: String,
     params: List<PrepareStatementParam>? = null,
+    typeMap:Map<KProperty1<*, *>,JDBCType>?=null,
     start: Long
 ): List<R> {
     val (connection, statement, resultSet) = executeQuery(sql, params)
     val list = mutableListOf<R>()
     // 遍历结果集
     while (resultSet.next()) {
-        resultSet.getObject<R>().let { list.add(it) }
+        resultSet.getObject<R>(typeMap).let { list.add(it) }
     }
     connection.closeAndAudit(statement, resultSet, sql, params, start)
     return list

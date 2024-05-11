@@ -1,11 +1,10 @@
 package cn.xiaosuli.freshen.core
 
 import cn.xiaosuli.freshen.core.anno.FreshenInternalApi
-import cn.xiaosuli.freshen.core.entity.KeyStrategy
-import cn.xiaosuli.freshen.core.entity.LogicDelete
-import cn.xiaosuli.freshen.core.entity.OptimisticLock
-import cn.xiaosuli.freshen.core.entity.PrepareStatementParam
+import cn.xiaosuli.freshen.core.entity.*
+import java.sql.JDBCType
 import javax.sql.DataSource
+import kotlin.reflect.KClass
 
 /**
  * Freshen 运行时配置类
@@ -43,6 +42,11 @@ object FreshenRuntimeConfig {
      * 是否开启驼峰转下划线
      */
     var enabledUnderscoreToCamelCase: Boolean = true
+
+    /**
+     * kType和JDBCType的映射器
+     */
+    val kTypeAndJDBCTypeMap: Map<KClass<*>, JDBCType> = defaultKTypeAndJDBCTypeMap
 
     /**
      * SQL审计1

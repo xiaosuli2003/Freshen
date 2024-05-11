@@ -7,16 +7,14 @@ import cn.xiaosuli.freshen.core.runFreshen
 import com.alibaba.druid.pool.DruidDataSource
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
+import java.sql.JDBCType
 import javax.sql.DataSource
+import kotlin.reflect.KProperty1
 
 class QueryTests {
 
     @Test
     fun test02(){
-        val s1 = (1..2)
-        println(s1.first)
-        println(s1.last)
-        println(s1.step)
     query<Student> {
         // select子句完毕
         // select(Student::class.full())
@@ -41,11 +39,19 @@ class QueryTests {
     @Test
     fun test01() {
         // 查询多条记录
-        val accountList = query<Student> {}
+        val map= mapOf(
+            Student2::id to JDBCType.BIGINT,
+            Student2::name to JDBCType.VARCHAR,
+            Student2::gender to JDBCType.VARCHAR,
+            Student2::birthday to JDBCType.TIMESTAMP,
+            Student2::phoneNumber to JDBCType.VARCHAR,
+            Student2::address to JDBCType.VARCHAR
+        )
+        val accountList = query<Student2>(map) {}
         accountList.forEach(::println)
         println(if (accountList.isEmpty()) "没有查到值" else "查到值了")
         // 查询一条记录
-        println(queryOne<Student>() ?: "没有查到值")
+        //println(queryOne<Student2>() ?: "没有查到值")
     }
 
     companion object {

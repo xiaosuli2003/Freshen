@@ -12,44 +12,57 @@ import kotlin.reflect.KProperty1
  *
  *  反射构造对象
  *
+ * @param typeMap 属性（列）和JDBCType的映射
  * @param R 要反射构造的对象类型
  * @return R?
  */
-inline fun <reified R> ResultSet.getObject(): R {
+inline fun <reified R> ResultSet.getObject(
+    typeMap:Map<KProperty1<*, *>,JDBCType>?=null
+): R {
     val noArgsConstructor = R::class.constructors.firstOrNull { it.parameters.isEmpty() }
     return if (noArgsConstructor == null) {
         // 走有参构造对象
-        getObjForHasArgsConstructor<R>()
+        getObjForHasArgsConstructor<R>(typeMap)
     } else {
         // 走无参构造对象
-        getObjForNoArgsConstructor<R>()
+        getObjForNoArgsConstructor<R>(typeMap)
     }
 }
 
 /**
  * 反射构造对象（适用于有参构造器）
  *
+ * @param typeMap 属性（列）和JDBCType的映射
  * @param R 要反射构造的对象类型
  * @return R?
  */
-inline fun <reified R> ResultSet.getObjForHasArgsConstructor(): R {
+inline fun <reified R> ResultSet.getObjForHasArgsConstructor(
+    typeMap:Map<KProperty1<*, *>,JDBCType>?=null
+): R {
     val hasArgsConstructor = R::class.constructors.firstOrNull()
     val size = hasArgsConstructor!!.parameters.size
     val params = Array<Any>(size) {}
-    hasArgsConstructor.parameters.forEachIndexed { index, parameter ->
-        val name = parameter.name!!
-        // TODO: 这里的映射还需要修改，或添加
-        when (parameter.type.classifier) {
-            Int::class -> params[index] = getInt(name.toUnderscore())
-            Long::class -> params[index] = getLong(name.toUnderscore())
-            String::class -> params[index] = getString(name.toUnderscore())
-            Boolean::class -> params[index] = getBoolean(name.toUnderscore())
-            Byte::class -> params[index] = getByte(name.toUnderscore())
-            Float::class -> params[index] = getFloat(name.toUnderscore())
-            Double::class -> params[index] = getDouble(name.toUnderscore())
-            BigDecimal::class -> params[index] = getBigDecimal(name.toUnderscore())
-            Short::class -> params[index] = getShort(name.toUnderscore())
-            else -> params[index] = getObject(name.toUnderscore())
+    R::class.members.filterIsInstance<KProperty1<R, *>>().forEach { kProperty1 ->
+        hasArgsConstructor.parameters.forEachIndexed { index, parameter ->
+            if (parameter.name == kProperty1.name) {
+                val name = parameter.name!!.toUnderscore()
+                val jdbcType = typeMap?.get(kProperty1)?:FreshenRuntimeConfig.kTypeAndJDBCTypeMap[parameter.type.classifier]
+                when(jdbcType){
+                    JDBCType.BIT,JDBCType.BOOLEAN -> params[index] = getBoolean(name)
+                    JDBCType.TINYINT-> params[index] = getByte(name)
+                    JDBCType.SMALLINT-> params[index] = getShort(name)
+                    JDBCType.INTEGER-> params[index] = getInt(name)
+                    JDBCType.BIGINT-> params[index] = getLong(name)
+                    JDBCType.FLOAT -> params[index] = getFloat(name)
+                    JDBCType.DOUBLE -> params[index] = getDouble(name)
+                    JDBCType.DECIMAL -> params[index] = getBigDecimal(name)
+                    JDBCType.CHAR,JDBCType.VARCHAR,JDBCType.LONGVARCHAR ,JDBCType.NCHAR,JDBCType.NVARCHAR,JDBCType.LONGNVARCHAR-> params[index] = getString(name)
+                    JDBCType.DATE -> params[index] = getDate(name).toLocalDate()
+                    JDBCType.TIME -> params[index] = getTime(name).toLocalTime()
+                    JDBCType.TIMESTAMP -> params[index] = getTimestamp(name).toLocalDateTime()
+                    else-> params[index] = getObject(name)
+                }
+            }
         }
     }
     return hasArgsConstructor.call(*params)
@@ -58,25 +71,32 @@ inline fun <reified R> ResultSet.getObjForHasArgsConstructor(): R {
 /**
  * 反射构造对象（适用于无参构造器）
  *
- * @param R 要反射构造的对象类型
+ * @param typeMap 属性（列）和JDBCType的映射
  * @return R?
- */
-inline fun <reified R> ResultSet.getObjForNoArgsConstructor(): R {
+ */data class A(val a:String)
+inline fun <reified R> ResultSet.getObjForNoArgsConstructor(
+    typeMap:Map<KProperty1<*, *>,JDBCType>?=null
+): R {
     val entity = R::class.constructors.firstOrNull { it.parameters.isEmpty() }!!.call()
     R::class.members.filterIsInstance<KProperty1<R, *>>().forEach { kProperty1 ->
+        val name = kProperty1.name.toUnderscore()
+        // 如果有传入typeMap，则使用typeMap中的值，否则使用默认的
+        val jdbcType = typeMap?.get(kProperty1) ?:FreshenRuntimeConfig.kTypeAndJDBCTypeMap[kProperty1.returnType.classifier]
         val kmp = kProperty1 as KMutableProperty1<R, *>
-        // TODO: 这里的映射还需要修改，或添加
-        when (kProperty1.returnType.classifier) {
-            Int::class -> kmp.setter.call(entity, getInt(kProperty1.name.toUnderscore()))
-            Long::class -> kmp.setter.call(entity, getLong(kProperty1.name.toUnderscore()))
-            String::class -> kmp.setter.call(entity, getString(kProperty1.name.toUnderscore()))
-            Boolean::class -> kmp.setter.call(entity, getBoolean(kProperty1.name.toUnderscore()))
-            Byte::class -> kmp.setter.call(entity, getByte(kProperty1.name.toUnderscore()))
-            Float::class -> kmp.setter.call(entity, getFloat(kProperty1.name.toUnderscore()))
-            Double::class -> kmp.setter.call(entity, getDouble(kProperty1.name.toUnderscore()))
-            BigDecimal::class -> kmp.setter.call(entity, getBigDecimal(kProperty1.name.toUnderscore()))
-            Short::class -> kmp.setter.call(entity, getShort(kProperty1.name.toUnderscore()))
-            else -> kmp.setter.call(entity, getObject(kProperty1.name.toUnderscore()))
+        when (jdbcType) {
+            JDBCType.BIT,JDBCType.BOOLEAN -> kmp.setter.call(entity, getBoolean(name))
+            JDBCType.TINYINT-> kmp.setter.call(entity, getByte(name))
+            JDBCType.SMALLINT-> kmp.setter.call(entity, getShort(name))
+            JDBCType.INTEGER-> kmp.setter.call(entity, getInt(name))
+            JDBCType.BIGINT-> kmp.setter.call(entity, getLong(name))
+            JDBCType.FLOAT -> kmp.setter.call(entity, getFloat(name))
+            JDBCType.DOUBLE -> kmp.setter.call(entity, getDouble(name))
+            JDBCType.DECIMAL -> kmp.setter.call(entity, getBigDecimal(name))
+            JDBCType.CHAR,JDBCType.VARCHAR,JDBCType.LONGVARCHAR ,JDBCType.NCHAR,JDBCType.NVARCHAR,JDBCType.LONGNVARCHAR-> kmp.setter.call(entity, getString(name))
+            JDBCType.DATE -> kmp.setter.call(entity, getDate(name).toLocalDate())
+            JDBCType.TIME -> kmp.setter.call(entity, getTime(name).toLocalTime())
+            JDBCType.TIMESTAMP -> kmp.setter.call(entity, getTimestamp(name).toLocalDateTime())
+            else -> kmp.setter.call(entity, getObject(name))
         }
     }
     return entity
