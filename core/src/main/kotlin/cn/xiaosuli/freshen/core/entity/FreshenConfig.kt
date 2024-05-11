@@ -1,3 +1,19 @@
+/*
+ * Copyright 2024 是晓酥梨呀(2060988267@qq.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package cn.xiaosuli.freshen.core.entity
 
 import java.math.BigDecimal
@@ -32,27 +48,27 @@ data class FreshenConfig(
     val tablePrefix: String? = null,
     val enabledUnderscoreToCamelCase: Boolean = true,
     val kTypeAndJDBCTypeMap: Map<KClass<*>, JDBCType> = defaultKTypeAndJDBCTypeMap,
-    val sqlAudit1: (sql: String,params:List<PrepareStatementParam>) -> Unit = {_,_->},
-    val sqlAudit2: (sql: String,params:List<PrepareStatementParam>?,elapsedTime: Long) -> Unit = { _,_, _ -> }
+    val sqlAudit1: (sql: String, params: List<PrepareStatementParam>) -> Unit = { _, _ -> },
+    val sqlAudit2: (sql: String, params: List<PrepareStatementParam>?, elapsedTime: Long) -> Unit = { _, _, _ -> }
 )
 
 /**
  * 默认的kType和JDBCType的映射器
  */
-val defaultKTypeAndJDBCTypeMap:Map<KClass<*>, JDBCType> = mapOf(
-Int::class to JDBCType.INTEGER,
-Long::class to JDBCType.BIGINT,
-SHORT::class to JDBCType.SMALLINT,
-Byte::class to JDBCType.TINYINT,
-Float::class to JDBCType.FLOAT,
-Double::class to JDBCType.DOUBLE,
-Boolean::class to JDBCType.BOOLEAN,
-Char::class to JDBCType.CHAR,
-String::class to JDBCType.VARCHAR,
-LocalDate::class to JDBCType.DATE,
-LocalDateTime::class to JDBCType.TIMESTAMP,
-LocalTime::class to JDBCType.TIME,
-BigDecimal::class to JDBCType.DECIMAL,
+val defaultKTypeAndJDBCTypeMap: Map<KClass<*>, JDBCType> = mapOf(
+    Int::class to JDBCType.INTEGER,
+    Long::class to JDBCType.BIGINT,
+    SHORT::class to JDBCType.SMALLINT,
+    Byte::class to JDBCType.TINYINT,
+    Float::class to JDBCType.FLOAT,
+    Double::class to JDBCType.DOUBLE,
+    Boolean::class to JDBCType.BOOLEAN,
+    Char::class to JDBCType.CHAR,
+    String::class to JDBCType.VARCHAR,
+    LocalDate::class to JDBCType.DATE,
+    LocalDateTime::class to JDBCType.TIMESTAMP,
+    LocalTime::class to JDBCType.TIME,
+    BigDecimal::class to JDBCType.DECIMAL,
 )
 
 /**
