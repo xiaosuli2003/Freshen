@@ -168,7 +168,7 @@ enum class KeyGenerator(
     /**
      * 默认行为，不使用生成器
      * 设置此值是为了避免写出[KeyGenerator?]这样的类型
-     * 本库不会用到这3个值
+     * 本库不会用到这个value值
      */
     NONE("none"),
 

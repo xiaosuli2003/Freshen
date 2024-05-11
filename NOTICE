@@ -1,0 +1,29 @@
+                                 Apache License
+                           Version 2.0, January 2004
+                        http://www.apache.org/licenses/
+
+   TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION
+
+------------------------------------------------------------------------
+
+致谢:
+
+Freshen项目感谢以下项目:
+- [Mybatis-Flex](https://github.com/mybatis-flex/mybatis-flex)，特别是[flexId和snowFlakeId这两个ID生成器]。
+- [Mybatis-Flex-Kotlin](https://github.com/mybatis-flex/mybatis-flex)，特别是[DbExtensions.kt]。
+
+[Mybatis-Flex]和[Mybatis-Flex-Kotlin]在Apache许可证2.0版的条款下使用。
+
+------------------------------------------------------------------------
+
+Acknowledgements and additional information:
+
+The Freshen project thanks the following projects:
+- [Mybatis-Flex](https://github.com/mybatis-flex/mybatis-flex), especially[flexId and snowFlakeId this two ID generator].
+- [Mybatis-Flex-Kotlin](https://github.com/mybatis-flex/mybatis-flex), especially[DbExtensions.Kt].
+
+[Mybatis-Flex] and [Mybatis-Flex-Kotlin] are used under the terms of the Apache License version 2.0.
+
+------------------------------------------------------------------------
+
+End of NOTICE file.

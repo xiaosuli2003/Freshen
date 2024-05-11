@@ -9,8 +9,10 @@
         <option name="modules">
           <set>
             <option value="$PROJECT_DIR$" />
-            <option value="$PROJECT_DIR$/core" />
-            <option value="$PROJECT_DIR$/test" />
+            <option value="$PROJECT_DIR$/freshen-core" />
+            <option value="$PROJECT_DIR$/freshen-test" />
+            <option value="$PROJECT_DIR$/freshen-test/freshen-native-test" />
+            <option value="$PROJECT_DIR$/freshen-test/freshen-spring-test" />
           </set>
         </option>
       </GradleProjectSettings>

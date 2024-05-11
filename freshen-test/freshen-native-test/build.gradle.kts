@@ -3,14 +3,14 @@ plugins {
 }
 
 group = "cn.xiaosuli"
-version = "1.0-SNAPSHOT"
+version = "unspecified"
 
 repositories {
     mavenCentral()
 }
 
 dependencies {
-    implementation(project(":core"))
+    implementation(project(":freshen-core"))
     implementation("com.alibaba:druid:1.2.22")
     runtimeOnly("com.mysql:mysql-connector-j:8.2.0")
     implementation("org.projectlombok:lombok:1.18.32")

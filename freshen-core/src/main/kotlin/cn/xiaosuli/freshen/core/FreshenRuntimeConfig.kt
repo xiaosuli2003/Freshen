@@ -62,7 +62,7 @@ object FreshenRuntimeConfig {
     /**
      * kType和JDBCType的映射器
      */
-    val kTypeAndJDBCTypeMap: Map<KClass<*>, JDBCType> = defaultKTypeAndJDBCTypeMap
+    var kTypeAndJDBCTypeMap: Map<KClass<*>, JDBCType> = defaultKTypeAndJDBCTypeMap
 
     /**
      * SQL审计1

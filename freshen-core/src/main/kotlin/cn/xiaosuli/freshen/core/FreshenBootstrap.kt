@@ -33,6 +33,7 @@ fun runFreshen(init: () -> FreshenConfig) {
     FreshenRuntimeConfig.optimisticLock = freshenSLConfig.optimisticLock
     FreshenRuntimeConfig.tablePrefix = freshenSLConfig.tablePrefix
     FreshenRuntimeConfig.enabledUnderscoreToCamelCase = freshenSLConfig.enabledUnderscoreToCamelCase
+    FreshenRuntimeConfig.kTypeAndJDBCTypeMap = freshenSLConfig.kTypeAndJDBCTypeMap
     FreshenRuntimeConfig.sqlAudit1 = freshenSLConfig.sqlAudit1
     FreshenRuntimeConfig.sqlAudit2 = freshenSLConfig.sqlAudit2
     // 全部初始化完了，再检查一下dataSource否已初始化
