@@ -29,8 +29,8 @@ import kotlin.reflect.jvm.internal.impl.renderer.ClassifierNamePolicy.SHORT
 
 /**
  * Freshen 配置类
- * sqlAudit1和sqlAudit2区别是前者执行时机不一样，
- * sqlAudit1拿不到最终的执行耗时，但是优点是就算执行prepareStatement发生异常，也会打印SQL
+ * * sqlAudit1和sqlAudit2区别:
+ * * 执行时机不一样，sqlAudit1拿不到最终的执行耗时，但是优点是就算执行prepareStatement发生异常，也会打印SQL
  *
  * @property dataSource 数据源，必传
  * @property keyStrategy 主键生成策略，默认为None（用户自行处理）

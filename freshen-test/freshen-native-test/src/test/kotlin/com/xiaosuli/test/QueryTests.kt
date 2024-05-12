@@ -1,14 +1,9 @@
 package com.xiaosuli.test
 
 import cn.xiaosuli.freshen.core.crud.query
-import cn.xiaosuli.freshen.core.crud.queryFlow
 import cn.xiaosuli.freshen.core.entity.FreshenConfig
 import cn.xiaosuli.freshen.core.runFreshen
 import com.alibaba.druid.pool.DruidDataSource
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import java.sql.JDBCType
@@ -19,27 +14,47 @@ class QueryTests {
 
     @Test
     fun test02() {
-            query<Student2> {
-                // select 子句开发完毕
-                select(Student2::id,Student2::name)
-                select("id","name","birthday")
-                select(Student2::id.column,"birthday")
-                select(Student2::class.all)
-                select(Student2::class.all,Student2::birthday)
-                select(Student2::class.columns,"birthday")
-                // from 子句开发完毕
-                from<Student2>()
-                from(Student2::class)
-                from("tb_student")
-                // group by 子句开发完毕
-                groupBy(Student2::id, Student2::birthday)
-                // having
-                having()
-                // order by 子句开发完毕
-                orderBy(Student2::id.desc, Student2::birthday.asc)
-                // limit 子句开发完毕
-                limit(1, 1)
-            }.forEach(::println)
+        query<Student2> {
+            // select 子句开发完毕
+            // select(Student2::id, Student2::name)
+            // select("id", "name", "birthday")
+            // select(Student2::id.column, "birthday")
+            // select(Student2::class.all)
+            // select多表才会用到以下重载
+            // select(Student2::class.all,Student2::class.all)
+            // select(Student2::class.all, Student2::birthday)
+            // select(Student2::class.columns, "birthday")
+
+            // from 子句开发完毕
+            // from<Student2>()
+            // from(Student2::class)
+            // from("tb_student")
+
+            // where 方式1
+            // where(Student2::id.eq("3") and Student2::name.eq("xiaosuli"))
+            // 方式2
+            where {
+                and {
+                    Student2::id.eq("1") or Student2::address.eq("1")
+                }
+                or {
+                    Student2::id.eq("1") or Student2::address.eq("1")
+                }
+            }
+
+            // group by 子句开发完毕
+            // groupBy(Student2::id, Student2::birthday)
+
+            // having
+            // having()
+
+            // order by 子句开发完毕
+            // orderBy(Student2::id.desc, Student2::birthday.asc)
+
+            // limit 子句开发完毕
+            // limit(1)
+            // limit(1, 1)
+        }.forEach(::println)
     }
 
     @Test

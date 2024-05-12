@@ -32,6 +32,8 @@ import java.sql.PreparedStatement
 import java.sql.ResultSet
 import kotlin.reflect.KProperty1
 
+// TODO: 等QueryAsBuilder写好后，这里要添加三个对应的as查询函数
+
 /**
  * 查询多条记录
  *

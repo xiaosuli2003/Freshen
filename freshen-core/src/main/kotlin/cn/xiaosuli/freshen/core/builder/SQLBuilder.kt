@@ -16,12 +16,14 @@
 
 package cn.xiaosuli.freshen.core.builder
 
+import cn.xiaosuli.freshen.core.anno.FreshenInternalApi
 import cn.xiaosuli.freshen.core.entity.PrepareStatementParam
 import cn.xiaosuli.freshen.core.entity.SQLWithParams
 
 /**
  * 最基本的SQL构造器
  */
+@FreshenInternalApi
 interface SQLBuilder {
     /**
      * SQL占位参数列表

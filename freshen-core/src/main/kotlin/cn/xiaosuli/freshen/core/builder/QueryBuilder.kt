@@ -17,7 +17,9 @@
 package cn.xiaosuli.freshen.core.builder
 
 import cn.xiaosuli.freshen.core.FreshenRuntimeConfig
+import cn.xiaosuli.freshen.core.anno.Column
 import cn.xiaosuli.freshen.core.anno.FreshenInternalApi
+import cn.xiaosuli.freshen.core.anno.Id
 import cn.xiaosuli.freshen.core.anno.Table
 import cn.xiaosuli.freshen.core.entity.PrepareStatementParam
 import cn.xiaosuli.freshen.core.entity.SQLWithParams
@@ -33,7 +35,7 @@ import kotlin.reflect.full.memberProperties
  * @param T 表对应的实体类
  */
 @FreshenInternalApi
-open class QueryBuilder<T : Any> : ConditionBuilder<T>(), SQLBuilder {
+open class QueryBuilder<T : Any> : QueryConditionScope<T>, QueryMethodScope<T>, SQLBuilder {
     /**
      * select [ column1, column2, ··· ]
      */
@@ -43,6 +45,11 @@ open class QueryBuilder<T : Any> : ConditionBuilder<T>(), SQLBuilder {
      * from 表名
      */
     var from = ""
+
+    /**
+     * where condition
+     */
+    var where = ""
 
     /**
      * group by column
@@ -76,18 +83,6 @@ open class QueryBuilder<T : Any> : ConditionBuilder<T>(), SQLBuilder {
 
     /**
      * 设置要查询的列
-     *
-     * @param columns 列名
-     */
-    fun select(vararg columns: KProperty1<T, *>) {
-        select = buildString {
-            append("select ")
-            columns.forEach { append("${it.name.toUnderscore()},") }
-        }.dropLast(1)
-    }
-
-    /**
-     * 设置要查询的列
      * * 建议直接硬编码列名，不要通过外面传入，否则可能会导致SQL注入问题
      * * 建议使用select(vararg columns: KProperty1<T,*>)这样的方法
      *
@@ -105,58 +100,34 @@ open class QueryBuilder<T : Any> : ConditionBuilder<T>(), SQLBuilder {
      *
      * @param columns 列名
      */
+    fun select(vararg columns: KProperty1<T, *>) {
+        select(columns.toList())
+    }
+
+    /**
+     * 设置要查询的列
+     *
+     * @param columns 列名
+     */
     fun select(columns: List<KProperty1<T, *>>) {
         select = buildString {
             append("select ")
-            columns.forEach { append("${it.name.toUnderscore()},") }
+            columns.forEach { column ->
+                val value = column.annotations.filterIsInstance<Id>().firstOrNull()?.value
+                    ?: column.annotations.filterIsInstance<Column>().firstOrNull()?.value
+                    ?: column.name.toUnderscore()
+                append("${value},")
+            }
         }.dropLast(1)
     }
 
     /**
-     * 设置要查询的列
-     * * 建议直接硬编码列名，不要通过外面传入，否则可能会导致SQL注入问题
-     * * 建议使用select(vararg columns: KProperty1<T,*>)这样的方法
-     *
-     * @param columns1 列名
-     * @param columns2 列名
-     */
-    fun select(columns1: List<String>, vararg columns2: String) {
-        select = buildString {
-            append("select ")
-            columns1.forEach { append("${it.toUnderscore()},") }
-            columns2.forEach { append("${it.toUnderscore()},") }
-        }.dropLast(1)
-    }
-
-    /**
-     * 设置要查询的列
-     *
-     * @param columns1 列名
-     * @param columns2 列名
-     */
-    fun select(columns1: List<KProperty1<T, *>>, vararg columns2: KProperty1<T, *>) {
-        select = buildString {
-            append("select ")
-            columns1.forEach { append("${it.name.toUnderscore()},") }
-            columns2.forEach { append("${it.name.toUnderscore()},") }
-        }.dropLast(1)
-    }
-
-    /**
-     * 查询全部字段
+     * 属性转字段（列）
      *
      * @return 所有字段集合
      */
     val KProperty1<T, *>.column: String
         get() = name.toUnderscore()
-
-    /**
-     * 查询全部字段
-     *
-     * @return 所有字段集合
-     */
-    val KClass<T>.columns: List<String>
-        get() = all.map { it.name.toUnderscore() }
 
     /**
      * 查询全部字段
@@ -211,6 +182,29 @@ open class QueryBuilder<T : Any> : ConditionBuilder<T>(), SQLBuilder {
         from = "from $table"
     }
 
+    // where ==================================================
+
+    /**
+     * 构建where子句
+     * TODO: 这两个where需要改为？占位形式
+     *
+     * @param queryCondition 查询条件
+     */
+    fun where(queryCondition: QueryCondition) {
+        where = "where ${queryCondition.toSql()}"
+    }
+
+    /**
+     * 构建where子句
+     *  TODO: 这两个where需要改为？占位形式
+     *
+     * @param action 查询lambda
+     */
+    fun where(action: QueryCondition.() -> QueryCondition) {
+        val queryCondition = QueryCondition.EmptyCondition
+        where = "where ${queryCondition.action().toSql()}"
+    }
+
     // group by ==================================================
 
     /**
@@ -223,9 +217,9 @@ open class QueryBuilder<T : Any> : ConditionBuilder<T>(), SQLBuilder {
             append("group by ")
             columns.forEach {
                 append(it.name.toUnderscore())
-                append(", ")
+                append(",")
             }
-        }.dropLast(2)
+        }.dropLast(1)
     }
 
     // having ==================================================
@@ -294,50 +288,6 @@ open class QueryBuilder<T : Any> : ConditionBuilder<T>(), SQLBuilder {
         limit = "limit $row"
     }
 
-    // mysql常用聚合函数 ===============================================
-
-    /**
-     * sql的count()函数
-     *
-     * @return count(*)
-     */
-    fun count(): String = "count(*)"
-
-    /**
-     * sql的count()函数
-     *
-     * @return count(column)
-     */
-    fun count(column: KProperty1<T, *>): String = "count(${column.name.toUnderscore()})"
-
-    /**
-     * sql的sum()函数
-     *
-     * @return sum(column)
-     */
-    fun sum(column: KProperty1<T, *>): String = "sum(${column.name.toUnderscore()})"
-
-    /**
-     * sql的avg()函数
-     *
-     * @return avg(column)
-     */
-    fun avg(column: KProperty1<T, *>): String = "avg(${column.name.toUnderscore()})"
-
-    /**
-     * sql的max()函数
-     *
-     * @return max(column)
-     */
-    fun max(column: KProperty1<T, *>): String = "max(${column.name.toUnderscore()})"
-
-    /**
-     * sql的min()函数
-     *
-     * @return min(column)
-     */
-    fun min(column: KProperty1<T, *>): String = "min(${column.name.toUnderscore()})"
-
     // sql build ==================================================
 
     /**
@@ -363,6 +313,4 @@ open class QueryBuilder<T : Any> : ConditionBuilder<T>(), SQLBuilder {
         }
         return SQLWithParams(sql, params)
     }
-
-
 }
