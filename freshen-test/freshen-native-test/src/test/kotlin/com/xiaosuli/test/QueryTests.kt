@@ -1,9 +1,14 @@
 package com.xiaosuli.test
 
 import cn.xiaosuli.freshen.core.crud.query
+import cn.xiaosuli.freshen.core.crud.queryFlow
 import cn.xiaosuli.freshen.core.entity.FreshenConfig
 import cn.xiaosuli.freshen.core.runFreshen
 import com.alibaba.druid.pool.DruidDataSource
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import java.sql.JDBCType
@@ -14,25 +19,20 @@ class QueryTests {
 
     @Test
     fun test02() {
-        query<Student> {
-            // select子句完毕
-            // select(Student::class.full())
-            // select(Student::id, Student::name)
-            // select("id","name")
-
-            // from子句完毕
-            // from<Student>()
-            // from(Student::class)
-            // from("tb_student")
-
-            // order by子句完毕
-            // orderBy(Student::id).desc()
-            // orderBy(Student::id).asc()
-
-            // limit子句完毕
-            // limit(1)
-            // limit(1,1)
-        }.forEach(::println)
+            query<Student2> {
+                // select 子句开发完毕
+                select(Student2::id,Student2::name)
+                select("id","name","birthday")
+                select(Student2::class.all)
+                // from 子句开发完毕
+                from<Student2>()
+                from(Student2::class)
+                from("tb_student")
+                // order by 子句开发完毕
+                orderBy(Student2::id.desc, Student2::birthday.asc)
+                // limit 子句开发完毕
+                limit(1, 1)
+            }.forEach(::println)
     }
 
     @Test

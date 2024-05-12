@@ -17,10 +17,12 @@
 package cn.xiaosuli.freshen.core.entity
 
 import java.math.BigDecimal
+import java.math.BigInteger
 import java.sql.JDBCType
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
+import java.util.Date
 import javax.sql.DataSource
 import kotlin.reflect.KClass
 import kotlin.reflect.jvm.internal.impl.renderer.ClassifierNamePolicy.SHORT
@@ -67,8 +69,10 @@ val defaultKTypeAndJDBCTypeMap: Map<KClass<*>, JDBCType> = mapOf(
     String::class to JDBCType.VARCHAR,
     LocalDate::class to JDBCType.DATE,
     LocalDateTime::class to JDBCType.TIMESTAMP,
+    Date::class to JDBCType.TIMESTAMP,
     LocalTime::class to JDBCType.TIME,
     BigDecimal::class to JDBCType.DECIMAL,
+    BigInteger::class to JDBCType.BIGINT,
 )
 
 /**

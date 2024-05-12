@@ -34,16 +34,39 @@ import kotlin.reflect.full.memberProperties
  * @param T 表对应的实体类
  */
 @FreshenInternalApi
-open class QueryBuilder<T : Any> : ConditionBuilder<T>() {
+open class QueryBuilder<T : Any> : ConditionBuilder<T>(), SQLBuilder {
+    /**
+     * select [ column1, column2, ··· ]
+     */
     var select = "select *"
+
+    /**
+     * from 表名
+     */
     var from = ""
+
     var groupBy = ""
     var having = ""
+
+    /**
+     * order by column asc/desc
+     */
     var orderBy = ""
+
+    /**
+     * limit 1 / limit 1, 1 / limit 1 offset 1
+     */
     var limit = ""
 
+    /**
+     * SQL占位参数列表
+     *
+     * TODO: "要实现这里的逻辑"
+     */
     override val params: List<PrepareStatementParam>
-        get() = TODO("要实现这里的逻辑")
+        get() = emptyList()
+
+    // select ==================================================
 
     /**
      * 设置要查询的字段
@@ -72,12 +95,12 @@ open class QueryBuilder<T : Any> : ConditionBuilder<T>() {
     /**
      * 设置要查询的字段
      *
-     * @param column 列名
+     * @param columns 列名
      */
-    fun select(column: List<String>) {
+    fun select(columns: List<String>) {
         select = buildString {
             append("select ")
-            column.forEach { append("${it.toUnderscore()},") }
+            columns.forEach { append("${it.toUnderscore()},") }
         }.dropLast(1)
     }
 
@@ -86,7 +109,10 @@ open class QueryBuilder<T : Any> : ConditionBuilder<T>() {
      *
      * @return 所有字段集合
      */
-    fun KClass<T>.all(): List<String> = memberProperties.map { it.name.toUnderscore() }
+    val KClass<T>.all: List<String>
+        get() = memberProperties.map { it.name.toUnderscore() }
+
+    // from ==================================================
 
     /**
      * 设置要查询的表
@@ -116,9 +142,9 @@ open class QueryBuilder<T : Any> : ConditionBuilder<T>() {
     /**
      * 设置要查询的表
      *
-     * @param T 表对应的实体类
+     * @param T 表对应的实体类引用
      */
-    inline fun <reified T> from() {
+    inline fun <reified T:Any>from() {
         // 获取表名，如果有注解，则使用注解的值，否则走统一前缀
         // 如果设置统一前缀，则标名为统一前缀+类名，否则直接使用类名
         val table = T::class.annotations.filterIsInstance<Table>().firstOrNull()?.value
@@ -129,45 +155,47 @@ open class QueryBuilder<T : Any> : ConditionBuilder<T>() {
         from = "from $table"
     }
 
-    /**
-     * 设置要排序的列
-     *
-     * @param property 要排序的列
-     */
-    fun orderBy(property: KProperty1<T, *>): OrderByCondition = OrderByCondition(property.name)
+    // order by ==================================================
 
     /**
      * 设置要排序的列
      *
-     * @param column 要排序的列
+     * @param orderBys 要排序的列和条件
      */
-    fun orderBy(column: String): OrderByCondition = OrderByCondition(column)
+    fun orderBy(vararg orderBys: OrderByCondition) {
+        orderBy = buildString {
+            append("order by ")
+            orderBys.forEach {
+                append(it.orderBy)
+                append(", ")
+            }
+        }.dropLast(2)
+    }
 
     /**
-     * 排序条件作用域，
-     * 设置此类的目的是避免把 asc desc函数挂在 KProperty1上，
-     * 不然会影响其他查询条件
+     * 保存排序条件的实体
      *
-     * @param column 要排序的列
+     * @param orderBy 要排序的列和条件
      */
-    class OrderByCondition(val column: String)
+    class OrderByCondition(val orderBy: String)
 
     /**
      * 设置升序
      */
-    fun OrderByCondition.asc() {
-        orderBy = "order by ${column.toUnderscore()} asc"
-    }
+    val KProperty1<*, *>.asc: OrderByCondition
+        get() = OrderByCondition("${name.toUnderscore()} asc")
 
     /**
      * 设置降序
      */
-    fun OrderByCondition.desc() {
-        orderBy = "order by ${column.toUnderscore()} desc"
-    }
+    val KProperty1<*, *>.desc: OrderByCondition
+        get() = OrderByCondition("${name.toUnderscore()} desc")
+
+    // limit ==================================================
 
     /**
      * 设置limit
+     * TODO: 这两个limit需要改为？占位形式
      *
      * @param pageSize 每页行数
      * @param pageNum 页码
@@ -179,6 +207,7 @@ open class QueryBuilder<T : Any> : ConditionBuilder<T>() {
 
     /**
      * 设置limit
+     * TODO: 这两个limit需要改为？占位形式
      *
      * @param row 行数
      */
@@ -188,7 +217,6 @@ open class QueryBuilder<T : Any> : ConditionBuilder<T>() {
 
     /**
      * 拼接SQL
-     * TODO: 这只是单表的SQL拼接，若支持多表查询，这个不行
      *
      * @return SQL
      */
@@ -208,8 +236,6 @@ open class QueryBuilder<T : Any> : ConditionBuilder<T>() {
             append(" ")
             append(limit)
         }
-        val params = mutableListOf<PrepareStatementParam>()
-        // TODO: 设置具体的占位参数
         return SQLWithParams(sql, params)
     }
 }

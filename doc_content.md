@@ -5,7 +5,11 @@
 
 ### todo:
 1. 启动类支持配置文件方式启动Freshen
-3. orderBy支持多排序
+2. orderBy支持多排序
+
+随想：
+关于IReop类的构想
+https://github.com/baomidou/mybatis-plus/issues/5764
 
 随想：
 1. 关于日期时间，强制使用LocalTime、LocalDateTime、LocalTime类型，你用java.util.Date就会报错

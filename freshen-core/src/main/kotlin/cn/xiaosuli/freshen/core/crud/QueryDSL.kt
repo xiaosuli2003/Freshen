@@ -22,6 +22,10 @@ import cn.xiaosuli.freshen.core.entity.PrepareStatementParam
 import cn.xiaosuli.freshen.core.utils.closeAndAudit
 import cn.xiaosuli.freshen.core.utils.getObject
 import cn.xiaosuli.freshen.core.utils.setParams
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.onCompletion
 import java.sql.Connection
 import java.sql.JDBCType
 import java.sql.PreparedStatement
@@ -36,16 +40,36 @@ import kotlin.reflect.KProperty1
  * @return List<T>
  */
 inline fun <reified T : Any> query(
-    typeMap:Map<KProperty1<*, *>,JDBCType>?=null,
+    typeMap: Map<KProperty1<*, *>, JDBCType>? = null,
     noinline init: (QueryBuilder<T>.() -> Unit)? = null
 ): List<T> {
+    val start = System.currentTimeMillis()
+    val queryBuilder = QueryBuilder<T>()
+    queryBuilder.from(T::class)
+    init?.invoke(queryBuilder)
+    val (sql, params) = queryBuilder.build()
+    FreshenRuntimeConfig.sqlAudit1(sql, params)
+    return executeQueryAndResultList<T>(sql, params, typeMap, start)
+}
+
+/**
+ * 查询多条记录
+ *
+ * @param typeMap kType和JDBCType的映射器
+ * @param init 在这里构建查询语句
+ * @return List<T>
+ */
+inline fun <reified T : Any> queryFlow(
+    typeMap: Map<KProperty1<*, *>, JDBCType>? = null,
+    noinline init: (QueryBuilder<T>.() -> Unit)? = null
+): Flow<T> {
     val start = System.currentTimeMillis()
     val queryBuilder = QueryBuilder<T>()
     queryBuilder.from<T>()
     init?.invoke(queryBuilder)
     val (sql, params) = queryBuilder.build()
     FreshenRuntimeConfig.sqlAudit1(sql, params)
-    return executeQueryAndResultList<T>(sql, params, typeMap,start)
+    return executeQueryAndResultFlow<T>(sql, params, typeMap, start)
 }
 
 /**
@@ -56,18 +80,18 @@ inline fun <reified T : Any> query(
  * @return List<T>
  */
 inline fun <reified T : Any> queryOne(
-    typeMap:Map<KProperty1<*, *>,JDBCType>?=null,
+    typeMap: Map<KProperty1<*, *>, JDBCType>? = null,
     noinline init: (QueryBuilder<T>.() -> Unit)? = null
 ): T? {
     val start = System.currentTimeMillis()
     val queryBuilder = QueryBuilder<T>()
-    queryBuilder.from<T>()
+    queryBuilder.from(T::class)
     init?.invoke(queryBuilder)
     // 无论用户设置limit为何值，这里强制设置为1
     queryBuilder.limit(1)
     val (sql, params) = queryBuilder.build()
     FreshenRuntimeConfig.sqlAudit1(sql, params)
-    return executeQueryAndResult<T>(sql, params, typeMap,start)
+    return executeQueryAndResult<T>(sql, params, typeMap, start)
 }
 
 /**
@@ -75,14 +99,14 @@ inline fun <reified T : Any> queryOne(
  *
  * @param sql SQL语句
  * @param params 参数列表
-* @param typeMap 属性（列）和JDBCType的映射
+ * @param typeMap 属性（列）和JDBCType的映射
  * @param start 开始时间
  * @return T
  */
 inline fun <reified R : Any> executeQueryAndResult(
     sql: String,
     params: List<PrepareStatementParam>? = null,
-    typeMap:Map<KProperty1<*, *>, JDBCType>?=null,
+    typeMap: Map<KProperty1<*, *>, JDBCType>? = null,
     start: Long
 ): R? {
     val (connection, statement, resultSet) = executeQuery(sql, params)
@@ -105,7 +129,7 @@ inline fun <reified R : Any> executeQueryAndResult(
 inline fun <reified R : Any> executeQueryAndResultList(
     sql: String,
     params: List<PrepareStatementParam>? = null,
-    typeMap:Map<KProperty1<*, *>,JDBCType>?=null,
+    typeMap: Map<KProperty1<*, *>, JDBCType>? = null,
     start: Long
 ): List<R> {
     val (connection, statement, resultSet) = executeQuery(sql, params)
@@ -116,6 +140,32 @@ inline fun <reified R : Any> executeQueryAndResultList(
     }
     connection.closeAndAudit(statement, resultSet, sql, params, start)
     return list
+}
+
+/**
+ * 执行查询，并返回处理好的结果
+ *
+ * @param sql SQL语句
+ * @param params 参数列表
+ * @param typeMap 属性（列）和JDBCType的映射
+ * @param start 开始时间
+ * @return List<R>
+ */
+inline fun <reified R : Any> executeQueryAndResultFlow(
+    sql: String,
+    params: List<PrepareStatementParam>? = null,
+    typeMap: Map<KProperty1<*, *>, JDBCType>? = null,
+    start: Long
+): Flow<R> {
+    val (connection, statement, resultSet) = executeQuery(sql, params)
+    return flow {
+        // 遍历结果集
+        while (resultSet.next()) {
+            emit(resultSet.getObject<R>(typeMap))
+        }
+    }.onCompletion {
+        connection.closeAndAudit(statement, resultSet, sql, params, start)
+    }
 }
 
 /**

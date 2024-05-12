@@ -21,6 +21,7 @@ import cn.xiaosuli.freshen.core.anno.FreshenInternalApi
 import cn.xiaosuli.freshen.core.entity.PrepareStatementParam
 import java.math.BigDecimal
 import java.sql.*
+import java.time.LocalDateTime
 import kotlin.reflect.KMutableProperty1
 import kotlin.reflect.KProperty1
 
@@ -33,7 +34,7 @@ import kotlin.reflect.KProperty1
  * @return R?
  */
 inline fun <reified R> ResultSet.getObject(
-    typeMap:Map<KProperty1<*, *>,JDBCType>?=null
+    typeMap: Map<KProperty1<*, *>, JDBCType>? = null
 ): R {
     val noArgsConstructor = R::class.constructors.firstOrNull { it.parameters.isEmpty() }
     return if (noArgsConstructor == null) {
@@ -53,7 +54,7 @@ inline fun <reified R> ResultSet.getObject(
  * @return R?
  */
 inline fun <reified R> ResultSet.getObjForHasArgsConstructor(
-    typeMap:Map<KProperty1<*, *>,JDBCType>?=null
+    typeMap: Map<KProperty1<*, *>, JDBCType>? = null
 ): R {
     val hasArgsConstructor = R::class.constructors.firstOrNull()
     val size = hasArgsConstructor!!.parameters.size
@@ -62,21 +63,29 @@ inline fun <reified R> ResultSet.getObjForHasArgsConstructor(
         hasArgsConstructor.parameters.forEachIndexed { index, parameter ->
             if (parameter.name == kProperty1.name) {
                 val name = parameter.name!!.toUnderscore()
-                val jdbcType = typeMap?.get(kProperty1)?:FreshenRuntimeConfig.kTypeAndJDBCTypeMap[parameter.type.classifier]
-                when(jdbcType){
-                    JDBCType.BIT,JDBCType.BOOLEAN -> params[index] = getBoolean(name)
-                    JDBCType.TINYINT-> params[index] = getByte(name)
-                    JDBCType.SMALLINT-> params[index] = getShort(name)
-                    JDBCType.INTEGER-> params[index] = getInt(name)
-                    JDBCType.BIGINT-> params[index] = getLong(name)
+                val jdbcType =
+                    typeMap?.get(kProperty1) ?: FreshenRuntimeConfig.kTypeAndJDBCTypeMap[parameter.type.classifier]
+                when (jdbcType) {
+                    JDBCType.BIT, JDBCType.BOOLEAN -> params[index] = getBoolean(name)
+                    JDBCType.TINYINT -> params[index] = getByte(name)
+                    JDBCType.SMALLINT -> params[index] = getShort(name)
+                    JDBCType.INTEGER -> params[index] = getInt(name)
+                    JDBCType.BIGINT -> params[index] = getLong(name)
                     JDBCType.FLOAT -> params[index] = getFloat(name)
                     JDBCType.DOUBLE -> params[index] = getDouble(name)
                     JDBCType.DECIMAL -> params[index] = getBigDecimal(name)
-                    JDBCType.CHAR,JDBCType.VARCHAR,JDBCType.LONGVARCHAR ,JDBCType.NCHAR,JDBCType.NVARCHAR,JDBCType.LONGNVARCHAR-> params[index] = getString(name)
+                    JDBCType.CHAR, JDBCType.VARCHAR, JDBCType.LONGVARCHAR, JDBCType.NCHAR, JDBCType.NVARCHAR, JDBCType.LONGNVARCHAR -> params[index] =
+                        getString(name)
+
                     JDBCType.DATE -> params[index] = getDate(name).toLocalDate()
                     JDBCType.TIME -> params[index] = getTime(name).toLocalTime()
-                    JDBCType.TIMESTAMP -> params[index] = getTimestamp(name).toLocalDateTime()
-                    else-> params[index] = getObject(name)
+                    JDBCType.TIMESTAMP -> params[index] = if (parameter.type.classifier == LocalDateTime::class) {
+                        getTimestamp(name).toLocalDateTime()
+                    } else {
+                        getTimestamp(name)
+                    }
+
+                    else -> params[index] = getObject(name)
                 }
             }
         }
@@ -89,29 +98,40 @@ inline fun <reified R> ResultSet.getObjForHasArgsConstructor(
  *
  * @param typeMap 属性（列）和JDBCType的映射
  * @return R?
- */data class A(val a:String)
+ */
+data class A(val a: String)
+
 inline fun <reified R> ResultSet.getObjForNoArgsConstructor(
-    typeMap:Map<KProperty1<*, *>,JDBCType>?=null
+    typeMap: Map<KProperty1<*, *>, JDBCType>? = null
 ): R {
     val entity = R::class.constructors.firstOrNull { it.parameters.isEmpty() }!!.call()
     R::class.members.filterIsInstance<KProperty1<R, *>>().forEach { kProperty1 ->
         val name = kProperty1.name.toUnderscore()
         // 如果有传入typeMap，则使用typeMap中的值，否则使用默认的
-        val jdbcType = typeMap?.get(kProperty1) ?:FreshenRuntimeConfig.kTypeAndJDBCTypeMap[kProperty1.returnType.classifier]
+        val jdbcType =
+            typeMap?.get(kProperty1) ?: FreshenRuntimeConfig.kTypeAndJDBCTypeMap[kProperty1.returnType.classifier]
         val kmp = kProperty1 as KMutableProperty1<R, *>
         when (jdbcType) {
-            JDBCType.BIT,JDBCType.BOOLEAN -> kmp.setter.call(entity, getBoolean(name))
-            JDBCType.TINYINT-> kmp.setter.call(entity, getByte(name))
-            JDBCType.SMALLINT-> kmp.setter.call(entity, getShort(name))
-            JDBCType.INTEGER-> kmp.setter.call(entity, getInt(name))
-            JDBCType.BIGINT-> kmp.setter.call(entity, getLong(name))
+            JDBCType.BIT, JDBCType.BOOLEAN -> kmp.setter.call(entity, getBoolean(name))
+            JDBCType.TINYINT -> kmp.setter.call(entity, getByte(name))
+            JDBCType.SMALLINT -> kmp.setter.call(entity, getShort(name))
+            JDBCType.INTEGER -> kmp.setter.call(entity, getInt(name))
+            JDBCType.BIGINT -> kmp.setter.call(entity, getLong(name))
             JDBCType.FLOAT -> kmp.setter.call(entity, getFloat(name))
             JDBCType.DOUBLE -> kmp.setter.call(entity, getDouble(name))
             JDBCType.DECIMAL -> kmp.setter.call(entity, getBigDecimal(name))
-            JDBCType.CHAR,JDBCType.VARCHAR,JDBCType.LONGVARCHAR ,JDBCType.NCHAR,JDBCType.NVARCHAR,JDBCType.LONGNVARCHAR-> kmp.setter.call(entity, getString(name))
+            JDBCType.CHAR, JDBCType.VARCHAR, JDBCType.LONGVARCHAR, JDBCType.NCHAR, JDBCType.NVARCHAR, JDBCType.LONGNVARCHAR -> kmp.setter.call(
+                entity,
+                getString(name)
+            )
+
             JDBCType.DATE -> kmp.setter.call(entity, getDate(name).toLocalDate())
             JDBCType.TIME -> kmp.setter.call(entity, getTime(name).toLocalTime())
-            JDBCType.TIMESTAMP -> kmp.setter.call(entity, getTimestamp(name).toLocalDateTime())
+            JDBCType.TIMESTAMP -> if(kProperty1.returnType.classifier == LocalDateTime::class){
+                kmp.setter.call(entity, getTimestamp(name).toLocalDateTime())
+            }else{
+                kmp.setter.call(entity, getTimestamp(name))
+            }
             else -> kmp.setter.call(entity, getObject(name))
         }
     }
@@ -153,12 +173,12 @@ fun Connection.closeAndAudit(
     statement: PreparedStatement,
     resultSet: ResultSet,
     sql: String,
-    params:List<PrepareStatementParam>?,
+    params: List<PrepareStatementParam>?,
     start: Long
 ) {
     this.close(statement, resultSet)
     val end = System.currentTimeMillis()
-    FreshenRuntimeConfig.sqlAudit2(sql, params,end - start)
+    FreshenRuntimeConfig.sqlAudit2(sql, params, end - start)
 }
 
 /**

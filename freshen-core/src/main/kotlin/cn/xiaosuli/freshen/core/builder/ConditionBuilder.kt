@@ -20,12 +20,14 @@ import cn.xiaosuli.freshen.core.utils.toUnderscore
 import kotlin.reflect.KProperty1
 
 /**
- * 基本构造器：
- * 适用于：修改语句、查询语句、删除语句
+ * where条件构造器，适用于：
+ * * 修改语句
+ * * 查询语句
+ * * 删除语句
  *
  * @param T 表对应的实体类
  */
-abstract class ConditionBuilder<T> : SQLBuilder {
+abstract class ConditionBuilder<T>{
     var where = ""
     var queryCondition: String = ""
 
@@ -34,7 +36,7 @@ abstract class ConditionBuilder<T> : SQLBuilder {
      *
      * @param condition 条件
      */
-    override fun where(vararg condition: String) {
+    fun where(vararg condition: String) {
         // TODO：这是一个where条件集合，condition也要是一个对象包含更多信息
         where = "$condition "
     }
@@ -63,19 +65,19 @@ abstract class ConditionBuilder<T> : SQLBuilder {
      * in
      *
      * @param V
-     * @param value 等于的值
+     * @param range 区间
      * @return
      */
     infix fun <V> KProperty1<T, V>.`in`(range: IntRange): String =
-        "${name.toUnderscore()} between ${range.first} and ${range.last} "
+        "${name.toUnderscore()} between ${range.first} and ${range.last}"
 
     /**
-     * =等于
+     * not in
      *
      * @param V
-     * @param value 等于的值
+     * @param range 区间
      * @return
      */
-    infix fun <V> KProperty1<T, V>.notIn(value: V): String =
-        "${name.toUnderscore()} = \"$value\""
+    infix fun <V> KProperty1<T, V>.notIn(range: IntRange): String =
+        "${name.toUnderscore()} not between ${range.first} and ${range.last}"
 }

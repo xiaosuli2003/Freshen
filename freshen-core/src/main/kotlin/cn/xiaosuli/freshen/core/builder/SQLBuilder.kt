@@ -29,13 +29,6 @@ interface SQLBuilder {
     val params: List<PrepareStatementParam>
 
     /**
-     * 构建where子句
-     *
-     * @param condition 条件
-     */
-    fun where(vararg condition: String)
-
-    /**
      * 构建SQL
      */
     fun build(): SQLWithParams
