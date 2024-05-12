@@ -12,6 +12,7 @@
             <option value="$PROJECT_DIR$/freshen-core" />
             <option value="$PROJECT_DIR$/freshen-test" />
             <option value="$PROJECT_DIR$/freshen-test/freshen-native-test" />
+            <option value="$PROJECT_DIR$/freshen-test/freshen-spring-boot-test" />
             <option value="$PROJECT_DIR$/freshen-test/freshen-spring-test" />
           </set>
         </option>

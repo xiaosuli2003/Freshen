@@ -23,7 +23,6 @@ import cn.xiaosuli.freshen.core.entity.PrepareStatementParam
 import cn.xiaosuli.freshen.core.entity.SQLWithParams
 import cn.xiaosuli.freshen.core.utils.toUnderscore
 import kotlin.reflect.KClass
-import kotlin.reflect.KProperty
 import kotlin.reflect.KProperty1
 import kotlin.reflect.full.memberProperties
 
@@ -45,7 +44,14 @@ open class QueryBuilder<T : Any> : ConditionBuilder<T>(), SQLBuilder {
      */
     var from = ""
 
+    /**
+     * group by column
+     */
     var groupBy = ""
+
+    /**
+     * having condition
+     */
     var having = ""
 
     /**
@@ -69,19 +75,21 @@ open class QueryBuilder<T : Any> : ConditionBuilder<T>(), SQLBuilder {
     // select ==================================================
 
     /**
-     * 设置要查询的字段
+     * 设置要查询的列
      *
-     * @param properties 属性引用
+     * @param columns 列名
      */
-    fun select(vararg properties: KProperty<*>) {
+    fun select(vararg columns: KProperty1<T, *>) {
         select = buildString {
             append("select ")
-            properties.forEach { append("${it.name.toUnderscore()},") }
+            columns.forEach { append("${it.name.toUnderscore()},") }
         }.dropLast(1)
     }
 
     /**
-     * 设置要查询的字段
+     * 设置要查询的列
+     * * 建议直接硬编码列名，不要通过外面传入，否则可能会导致SQL注入问题
+     * * 建议使用select(vararg columns: KProperty1<T,*>)这样的方法
      *
      * @param column 列名
      */
@@ -93,14 +101,44 @@ open class QueryBuilder<T : Any> : ConditionBuilder<T>(), SQLBuilder {
     }
 
     /**
-     * 设置要查询的字段
+     * 设置要查询的列
      *
      * @param columns 列名
      */
-    fun select(columns: List<String>) {
+    fun select(columns: List<KProperty1<T, *>>) {
         select = buildString {
             append("select ")
-            columns.forEach { append("${it.toUnderscore()},") }
+            columns.forEach { append("${it.name.toUnderscore()},") }
+        }.dropLast(1)
+    }
+
+    /**
+     * 设置要查询的列
+     * * 建议直接硬编码列名，不要通过外面传入，否则可能会导致SQL注入问题
+     * * 建议使用select(vararg columns: KProperty1<T,*>)这样的方法
+     *
+     * @param columns1 列名
+     * @param columns2 列名
+     */
+    fun select(columns1: List<String>, vararg columns2: String) {
+        select = buildString {
+            append("select ")
+            columns1.forEach { append("${it.toUnderscore()},") }
+            columns2.forEach { append("${it.toUnderscore()},") }
+        }.dropLast(1)
+    }
+
+    /**
+     * 设置要查询的列
+     *
+     * @param columns1 列名
+     * @param columns2 列名
+     */
+    fun select(columns1: List<KProperty1<T, *>>, vararg columns2: KProperty1<T, *>) {
+        select = buildString {
+            append("select ")
+            columns1.forEach { append("${it.name.toUnderscore()},") }
+            columns2.forEach { append("${it.name.toUnderscore()},") }
         }.dropLast(1)
     }
 
@@ -109,13 +147,31 @@ open class QueryBuilder<T : Any> : ConditionBuilder<T>(), SQLBuilder {
      *
      * @return 所有字段集合
      */
-    val KClass<T>.all: List<String>
-        get() = memberProperties.map { it.name.toUnderscore() }
+    val KProperty1<T, *>.column: String
+        get() = name.toUnderscore()
+
+    /**
+     * 查询全部字段
+     *
+     * @return 所有字段集合
+     */
+    val KClass<T>.columns: List<String>
+        get() = all.map { it.name.toUnderscore() }
+
+    /**
+     * 查询全部字段
+     *
+     * @return 所有字段集合
+     */
+    val KClass<T>.all: List<KProperty1<T, *>>
+        get() = memberProperties.toList()
 
     // from ==================================================
 
     /**
      * 设置要查询的表
+     * * 请直接硬编码表名，不要通过外面传入，否则可能会导致SQL注入问题
+     * * 建议使用from<T>()和from(KClass)方法
      *
      * @param table 表名
      */
@@ -144,7 +200,7 @@ open class QueryBuilder<T : Any> : ConditionBuilder<T>(), SQLBuilder {
      *
      * @param T 表对应的实体类引用
      */
-    inline fun <reified T:Any>from() {
+    inline fun <reified T : Any> from() {
         // 获取表名，如果有注解，则使用注解的值，否则走统一前缀
         // 如果设置统一前缀，则标名为统一前缀+类名，否则直接使用类名
         val table = T::class.annotations.filterIsInstance<Table>().firstOrNull()?.value
@@ -155,10 +211,33 @@ open class QueryBuilder<T : Any> : ConditionBuilder<T>(), SQLBuilder {
         from = "from $table"
     }
 
+    // group by ==================================================
+
+    /**
+     * 设置要分组的列
+     *
+     * @param columns 要分组的列
+     */
+    fun groupBy(vararg columns: KProperty1<T, *>) {
+        groupBy = buildString {
+            append("group by ")
+            columns.forEach {
+                append(it.name.toUnderscore())
+                append(", ")
+            }
+        }.dropLast(2)
+    }
+
+    // having ==================================================
+
+    fun having() {
+        having = "having"
+    }
+
     // order by ==================================================
 
     /**
-     * 设置要排序的列
+     * 设置要排序的列和条件
      *
      * @param orderBys 要排序的列和条件
      */
@@ -215,6 +294,52 @@ open class QueryBuilder<T : Any> : ConditionBuilder<T>(), SQLBuilder {
         limit = "limit $row"
     }
 
+    // mysql常用聚合函数 ===============================================
+
+    /**
+     * sql的count()函数
+     *
+     * @return count(*)
+     */
+    fun count(): String = "count(*)"
+
+    /**
+     * sql的count()函数
+     *
+     * @return count(column)
+     */
+    fun count(column: KProperty1<T, *>): String = "count(${column.name.toUnderscore()})"
+
+    /**
+     * sql的sum()函数
+     *
+     * @return sum(column)
+     */
+    fun sum(column: KProperty1<T, *>): String = "sum(${column.name.toUnderscore()})"
+
+    /**
+     * sql的avg()函数
+     *
+     * @return avg(column)
+     */
+    fun avg(column: KProperty1<T, *>): String = "avg(${column.name.toUnderscore()})"
+
+    /**
+     * sql的max()函数
+     *
+     * @return max(column)
+     */
+    fun max(column: KProperty1<T, *>): String = "max(${column.name.toUnderscore()})"
+
+    /**
+     * sql的min()函数
+     *
+     * @return min(column)
+     */
+    fun min(column: KProperty1<T, *>): String = "min(${column.name.toUnderscore()})"
+
+    // sql build ==================================================
+
     /**
      * 拼接SQL
      *
@@ -238,4 +363,6 @@ open class QueryBuilder<T : Any> : ConditionBuilder<T>(), SQLBuilder {
         }
         return SQLWithParams(sql, params)
     }
+
+
 }

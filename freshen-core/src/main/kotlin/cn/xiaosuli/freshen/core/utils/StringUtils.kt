@@ -23,6 +23,15 @@ import java.util.*
 /**
  * 将驼峰命名转换为下划线分隔的字符串。
  *
+ * * 此扩展函数为Freshen内部API，还请不要使用。
+ * * 如果你也想实现类似的转换，请复制以下代码（即去掉与Freshen相关联的业务代码）
+ * ```kotlin
+ * fun String.toUnderscore(): String {
+ *     val regex = Regex("([a-z])([A-Z])")
+ *     return this.replace(regex, "$1_$2").lowercase(Locale.getDefault())
+ * }
+ * ```
+ *
  * @return 转换后的下划线分隔字符串。
  */
 @FreshenInternalApi

@@ -23,11 +23,18 @@ class QueryTests {
                 // select 子句开发完毕
                 select(Student2::id,Student2::name)
                 select("id","name","birthday")
+                select(Student2::id.column,"birthday")
                 select(Student2::class.all)
+                select(Student2::class.all,Student2::birthday)
+                select(Student2::class.columns,"birthday")
                 // from 子句开发完毕
                 from<Student2>()
                 from(Student2::class)
                 from("tb_student")
+                // group by 子句开发完毕
+                groupBy(Student2::id, Student2::birthday)
+                // having
+                having()
                 // order by 子句开发完毕
                 orderBy(Student2::id.desc, Student2::birthday.asc)
                 // limit 子句开发完毕

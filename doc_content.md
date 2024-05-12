@@ -5,7 +5,7 @@
 
 ### todo:
 1. 启动类支持配置文件方式启动Freshen
-2. orderBy支持多排序
+2. where条件的非聚合函数
 
 随想：
 关于IReop类的构想

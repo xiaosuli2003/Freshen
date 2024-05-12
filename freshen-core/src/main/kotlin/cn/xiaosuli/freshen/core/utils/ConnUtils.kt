@@ -99,8 +99,6 @@ inline fun <reified R> ResultSet.getObjForHasArgsConstructor(
  * @param typeMap 属性（列）和JDBCType的映射
  * @return R?
  */
-data class A(val a: String)
-
 inline fun <reified R> ResultSet.getObjForNoArgsConstructor(
     typeMap: Map<KProperty1<*, *>, JDBCType>? = null
 ): R {
