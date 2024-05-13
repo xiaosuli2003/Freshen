@@ -24,19 +24,33 @@ import kotlin.reflect.full.memberProperties
 
 /**
  * 查询语句构造器：
- * 适用于 queryAs，queryOne,queryAsync,queryOneAsync
+ * 适用于 queryAs，queryOneAs,queryFlowAs
  *
  * @param T 表对应的实体类
  */
 @FreshenInternalApi
 class QueryAsBuilder<T : Any> : QueryBuilder<T>() {
+    /**
+     * join 条件
+     */
     private var join = ""
 
+    /**
+     * 设置连接查询
+     *
+     * TODO: join / left join / right join / inner join / union / union all待实现
+     */
     fun join() {
         select = ""
     }
 
-    infix fun <T, V> KProperty1<T, *>.`as`(value: String): String = "as"
+    /**
+     * 同sql的`as`语法
+     *
+     * @param value
+     * @return `column as value`
+     */
+    infix fun KProperty1<T, *>.`as`(value: String): String = "$column as $value"
 
     /**
      * 设置要查询的列

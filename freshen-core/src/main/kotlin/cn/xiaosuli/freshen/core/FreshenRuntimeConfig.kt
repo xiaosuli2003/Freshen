@@ -70,14 +70,14 @@ object FreshenRuntimeConfig {
      * 就算执行sql时报错，也会执行，方便确定sql拼接是否有误。
      * 缺点是拿不到执行耗时
      */
-    var sqlAudit1: (sql: String,List<PrepareStatementParam>) -> Unit = {_,_->}
+    var sqlAudit1: (sql: String,Array<PrepareStatementParam>) -> Unit = {_,_->}
 
     /**
      * SQL审计2
      * 和sqlAudit1区别：执行时机不同，该方法是在执行SQL后执行，
      * 能拿到执行耗时，缺点是当执行sql时报错，不会执行
      */
-    var sqlAudit2: (sql:String,List<PrepareStatementParam>?,elapsedTime: Long) -> Unit = { _, _,_ -> }
+    var sqlAudit2: (sql:String,Array<PrepareStatementParam>,elapsedTime: Long) -> Unit = { _, _,_ -> }
 
     /**
      * 检查运行时配置类中所有属性是否初始化

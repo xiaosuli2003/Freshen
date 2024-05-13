@@ -17,13 +17,13 @@
 package cn.xiaosuli.freshen.core.crud
 
 import cn.xiaosuli.freshen.core.FreshenRuntimeConfig
+import cn.xiaosuli.freshen.core.anno.FreshenInternalApi
 import cn.xiaosuli.freshen.core.builder.QueryBuilder
 import cn.xiaosuli.freshen.core.entity.PrepareStatementParam
 import cn.xiaosuli.freshen.core.utils.closeAndAudit
 import cn.xiaosuli.freshen.core.utils.getObject
 import cn.xiaosuli.freshen.core.utils.setParams
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.onCompletion
 import java.sql.Connection
@@ -31,8 +31,6 @@ import java.sql.JDBCType
 import java.sql.PreparedStatement
 import java.sql.ResultSet
 import kotlin.reflect.KProperty1
-
-// TODO: 等QueryAsBuilder写好后，这里要添加三个对应的as查询函数
 
 /**
  * 查询多条记录
@@ -45,12 +43,7 @@ inline fun <reified T : Any> query(
     typeMap: Map<KProperty1<*, *>, JDBCType>? = null,
     noinline init: (QueryBuilder<T>.() -> Unit)? = null
 ): List<T> {
-    val start = System.currentTimeMillis()
-    val queryBuilder = QueryBuilder<T>()
-    queryBuilder.from(T::class)
-    init?.invoke(queryBuilder)
-    val (sql, params) = queryBuilder.build()
-    FreshenRuntimeConfig.sqlAudit1(sql, params)
+    val (sql, params, start) = buildQuerySQL<T>(init)
     return executeQueryAndResultList<T>(sql, params, typeMap, start)
 }
 
@@ -59,18 +52,13 @@ inline fun <reified T : Any> query(
  *
  * @param typeMap kType和JDBCType的映射器
  * @param init 在这里构建查询语句
- * @return List<T>
+ * @return Flow<T>
  */
 inline fun <reified T : Any> queryFlow(
     typeMap: Map<KProperty1<*, *>, JDBCType>? = null,
     noinline init: (QueryBuilder<T>.() -> Unit)? = null
 ): Flow<T> {
-    val start = System.currentTimeMillis()
-    val queryBuilder = QueryBuilder<T>()
-    queryBuilder.from<T>()
-    init?.invoke(queryBuilder)
-    val (sql, params) = queryBuilder.build()
-    FreshenRuntimeConfig.sqlAudit1(sql, params)
+    val (sql, params, start) = buildQuerySQL<T>(init)
     return executeQueryAndResultFlow<T>(sql, params, typeMap, start)
 }
 
@@ -97,6 +85,55 @@ inline fun <reified T : Any> queryOne(
 }
 
 /**
+ * 查询多条记录
+ *
+ * @param typeMap kType和JDBCType的映射器
+ * @param init 在这里构建查询语句
+ * @return List<R>
+ */
+inline fun <reified T : Any, reified R : Any> queryAs(
+    typeMap: Map<KProperty1<*, *>, JDBCType>? = null,
+    noinline init: (QueryBuilder<T>.() -> Unit)? = null
+): List<R> {
+    val (sql, params, start) = buildQuerySQL<T>(init)
+    return executeQueryAndResultList<R>(sql, params, typeMap, start)
+}
+
+/**
+ * 查询多条记录
+ *
+ * @param typeMap kType和JDBCType的映射器
+ * @param init 在这里构建查询语句
+ * @return Flow<R>
+ */
+inline fun <reified T : Any, reified R : Any> queryFlowAs(
+    typeMap: Map<KProperty1<*, *>, JDBCType>? = null,
+    noinline init: (QueryBuilder<T>.() -> Unit)? = null
+): Flow<R> {
+    val (sql, params, start) = buildQuerySQL<T>(init)
+    return executeQueryAndResultFlow<R>(sql, params, typeMap, start)
+}
+
+/**
+ * query系列函数的构建查询语句
+ *
+ * @param init 在这里构建查询语句
+ * @return Triple<String, List<PrepareStatementParam>, Long>
+ */
+@FreshenInternalApi
+inline fun <reified T : Any> buildQuerySQL(
+    noinline init: (QueryBuilder<T>.() -> Unit)? = null
+): Triple<String, Array<PrepareStatementParam>, Long> {
+    val start = System.currentTimeMillis()
+    val queryBuilder = QueryBuilder<T>()
+    queryBuilder.from(T::class)
+    init?.invoke(queryBuilder)
+    val (sql, params) = queryBuilder.build()
+    FreshenRuntimeConfig.sqlAudit1(sql, params)
+    return Triple(sql, params, start)
+}
+
+/**
  * 执行查询，并返回处理好的结果
  *
  * @param sql SQL语句
@@ -105,9 +142,10 @@ inline fun <reified T : Any> queryOne(
  * @param start 开始时间
  * @return T
  */
+@FreshenInternalApi
 inline fun <reified R : Any> executeQueryAndResult(
     sql: String,
-    params: List<PrepareStatementParam>? = null,
+    params: Array<PrepareStatementParam>,
     typeMap: Map<KProperty1<*, *>, JDBCType>? = null,
     start: Long
 ): R? {
@@ -128,9 +166,10 @@ inline fun <reified R : Any> executeQueryAndResult(
  * @param start 开始时间
  * @return List<R>
  */
+@FreshenInternalApi
 inline fun <reified R : Any> executeQueryAndResultList(
     sql: String,
-    params: List<PrepareStatementParam>? = null,
+    params: Array<PrepareStatementParam>,
     typeMap: Map<KProperty1<*, *>, JDBCType>? = null,
     start: Long
 ): List<R> {
@@ -153,9 +192,10 @@ inline fun <reified R : Any> executeQueryAndResultList(
  * @param start 开始时间
  * @return List<R>
  */
+@FreshenInternalApi
 inline fun <reified R : Any> executeQueryAndResultFlow(
     sql: String,
-    params: List<PrepareStatementParam>? = null,
+    params: Array<PrepareStatementParam>,
     typeMap: Map<KProperty1<*, *>, JDBCType>? = null,
     start: Long
 ): Flow<R> {
@@ -177,10 +217,11 @@ inline fun <reified R : Any> executeQueryAndResultFlow(
  * @param params 参数列表
  * @return Triple<Connection, PreparedStatement, ResultSet>
  */
+@FreshenInternalApi
 @Suppress("SqlSourceToSinkFlow")
 fun executeQuery(
     sql: String,
-    params: List<PrepareStatementParam>? = null
+    params: Array<PrepareStatementParam>? = null
 ): Triple<Connection, PreparedStatement, ResultSet> {
     val connection = FreshenRuntimeConfig.dataSource.connection
     val statement = connection.prepareStatement(sql)

@@ -16,7 +16,7 @@
 
 package cn.xiaosuli.freshen.core.entity
 
-import kotlin.reflect.KProperty1
+import kotlin.reflect.KClass
 
 /**
  * SQL与参数
@@ -26,18 +26,34 @@ import kotlin.reflect.KProperty1
  */
 data class SQLWithParams(
     val sql: String,
-    val params: List<PrepareStatementParam>
-)
+    val params: Array<PrepareStatementParam>
+) {
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as SQLWithParams
+
+        if (sql != other.sql) return false
+        if (!params.contentEquals(other.params)) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = sql.hashCode()
+        result = 31 * result + params.contentHashCode()
+        return result
+    }
+}
 
 /**
  * PrepareStatement参数实体
  *
- * @param index 占位参数位置
  * @param type 参数类型
  * @param value 参数值
  */
 data class PrepareStatementParam(
-    val index: Int,
-    val type: KProperty1<*, *>,
+    val type: KClass<*>,
     val value: Any
 )

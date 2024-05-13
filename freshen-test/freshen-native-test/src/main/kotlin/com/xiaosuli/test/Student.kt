@@ -21,7 +21,7 @@ class Student {
 data class Student2 (
     @Id("id22")
     val id: Long,
-    @Column("name")
+    @Column("name33")
     val name: String,
     val gender: String,
     val birthday: LocalDateTime,

@@ -17,7 +17,6 @@
 package cn.xiaosuli.freshen.core.builder
 
 import cn.xiaosuli.freshen.core.anno.FreshenInternalApi
-import cn.xiaosuli.freshen.core.entity.PrepareStatementParam
 import cn.xiaosuli.freshen.core.entity.SQLWithParams
 
 /**
@@ -25,11 +24,6 @@ import cn.xiaosuli.freshen.core.entity.SQLWithParams
  */
 @FreshenInternalApi
 interface SQLBuilder {
-    /**
-     * SQL占位参数列表
-     */
-    val params: List<PrepareStatementParam>
-
     /**
      * 构建SQL
      */

@@ -143,19 +143,21 @@ inline fun <reified R> ResultSet.getObjForNoArgsConstructor(
  *
  * @param params 参数列表
  */
-fun PreparedStatement.setParams(params: List<PrepareStatementParam>?) {
-    params?.forEach {
-        when (it.type.returnType.classifier) {
-            Int::class -> setInt(it.index, it.value as Int)
-            Long::class, BigInteger::class -> setLong(it.index, it.value as Long)
-            String::class -> setString(it.index, it.value as String)
-            Boolean::class -> setBoolean(it.index, it.value as Boolean)
-            Byte::class -> setByte(it.index, it.value as Byte)
-            Float::class -> setFloat(it.index, it.value as Float)
-            Double::class -> setDouble(it.index, it.value as Double)
-            BigDecimal::class -> setBigDecimal(it.index, it.value as BigDecimal)
-            Short::class -> setShort(it.index, it.value as Short)
-            else -> setObject(it.index, it.value)
+fun PreparedStatement.setParams(params: Array<PrepareStatementParam>?) {
+    params?.forEachIndexed {index, param ->
+        val parameterIndex = index+1
+        val (type,value) = param
+        when (type) {
+            Int::class -> setInt(parameterIndex, value as Int)
+            Long::class, BigInteger::class -> setLong(parameterIndex, value as Long)
+            String::class -> setString(parameterIndex, value as String)
+            Boolean::class -> setBoolean(parameterIndex, value as Boolean)
+            Byte::class -> setByte(parameterIndex, value as Byte)
+            Float::class -> setFloat(parameterIndex, value as Float)
+            Double::class -> setDouble(parameterIndex, value as Double)
+            BigDecimal::class -> setBigDecimal(parameterIndex, value as BigDecimal)
+            Short::class -> setShort(parameterIndex, value as Short)
+            else -> setObject(parameterIndex, value)
         }
     }
 }
@@ -173,7 +175,7 @@ fun Connection.closeAndAudit(
     statement: PreparedStatement,
     resultSet: ResultSet,
     sql: String,
-    params: List<PrepareStatementParam>?,
+    params: Array<PrepareStatementParam>,
     start: Long
 ) {
     this.close(statement, resultSet)

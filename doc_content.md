@@ -5,11 +5,15 @@
 
 ### todo:
 1. 启动类支持配置文件方式启动Freshen
-2. where条件的非聚合函数
-4. 多表支持，form两个及以上表，join系列，union、union all、union系列
-5. 嵌套查询，子查询
-6. 目前select只考虑了单表情况，如果要多表，QueryAsBuilder需要重写
-7. _虽然搞了prepareStatement，但是没有使用，因为参数在sql中写死了（涉及limit，where，having）_
+2. 多表支持，form两个及以上表，join系列，union、union all、union系列
+3. 上面两个写完就写增删改函数、分页函数
+4. 事务支持
+5. spring支持
+6. 这5个写完，基本功能就写完了，就可以搞文档了
+
+7. where条件的非聚合函数
+8. 嵌套查询，子查询
+9. 目前select只考虑了单表情况，如果要多表，QueryAsBuilder需要重写
 
 随想：
 关于IReop类的构想

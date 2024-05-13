@@ -30,7 +30,7 @@ import kotlin.reflect.full.memberProperties
 
 /**
  * 查询语句构造器（适用于单表查询）
- * 用于query，queryOne,queryAsync,queryOneAsync
+ * 适用于query，queryOne,queryFlow
  *
  * @param T 表对应的实体类
  */
@@ -72,11 +72,19 @@ open class QueryBuilder<T : Any> : QueryConditionScope<T>, QueryMethodScope<T>, 
     var limit = ""
 
     /**
-     * SQL占位参数列表
-     * TODO: "要实现这里的逻辑"
+     * where占位参数列表
      */
-    override val params: List<PrepareStatementParam>
-        get() = emptyList()
+    private var whereParams: Array<PrepareStatementParam> = emptyArray()
+
+    /**
+     * having占位参数列表
+     */
+    private var havingParams: Array<PrepareStatementParam> = emptyArray()
+
+    /**
+     * limit占位参数列表
+     */
+    private var limitParams: Array<PrepareStatementParam> = emptyArray()
 
     // select ==================================================
 
@@ -207,23 +215,24 @@ open class QueryBuilder<T : Any> : QueryConditionScope<T>, QueryMethodScope<T>, 
 
     /**
      * 构建where子句
-     * TODO: 这两个where需要改为？占位形式
      *
      * @param queryCondition 查询条件
      */
     fun where(queryCondition: QueryCondition) {
         where = "where ${queryCondition.toSql()}"
+        whereParams = queryCondition.queryParams
     }
 
     /**
      * 构建where子句
-     *  TODO: 这两个where需要改为？占位形式
      *
      * @param action 查询lambda
      */
     fun where(action: QueryCondition.() -> QueryCondition) {
-        val queryCondition = QueryCondition.EmptyCondition
-        where = "where ${queryCondition.action().toSql()}"
+        val emptyCondition = QueryCondition.EmptyCondition
+        val queryCondition = emptyCondition.action()
+        where = "where ${queryCondition.toSql()}"
+        whereParams = queryCondition.queryParams
     }
 
     // group by ==================================================
@@ -247,23 +256,24 @@ open class QueryBuilder<T : Any> : QueryConditionScope<T>, QueryMethodScope<T>, 
 
     /**
      * 构建having子句
-     * TODO: 这两个having需要改为？占位形式
      *
      * @param queryCondition 查询条件
      */
     fun having(queryCondition: QueryCondition) {
         having = "having ${queryCondition.toSql()}"
+        havingParams = queryCondition.queryParams
     }
 
     /**
      * 构建having子句
-     *  TODO: 这两个having需要改为？占位形式
      *
      * @param action 查询lambda
      */
     fun having(action: QueryCondition.() -> QueryCondition) {
-        val queryCondition = QueryCondition.EmptyCondition
-        having = "having ${queryCondition.action().toSql()}"
+        val emptyCondition = QueryCondition.EmptyCondition
+        val queryCondition = emptyCondition.action()
+        having = "having ${queryCondition.toSql()}"
+        havingParams = queryCondition.queryParams
     }
 
     // order by ==================================================
@@ -306,24 +316,27 @@ open class QueryBuilder<T : Any> : QueryConditionScope<T>, QueryMethodScope<T>, 
 
     /**
      * 设置limit
-     * TODO: 这两个limit需要改为？占位形式
      *
      * @param pageSize 每页行数
      * @param pageNum 页码
      */
     fun limit(pageSize: Int, pageNum: Int) {
         val offset = (pageNum - 1) * pageSize
-        limit = "limit $offset, $pageSize"
+        limit = "limit ?, ?"
+        limitParams = arrayOf(
+            PrepareStatementParam(offset::class, offset),
+            PrepareStatementParam(pageSize::class, pageSize)
+        )
     }
 
     /**
      * 设置limit
-     * TODO: 这两个limit需要改为？占位形式
      *
      * @param row 行数
      */
     fun limit(row: Int) {
-        limit = "limit $row"
+        limit = "limit ?"
+        limitParams = arrayOf(PrepareStatementParam(Int::class, row))
     }
 
     // sql build ==================================================
@@ -349,6 +362,7 @@ open class QueryBuilder<T : Any> : QueryConditionScope<T>, QueryMethodScope<T>, 
             append(" ")
             append(limit)
         }
+        val params = arrayOf(*whereParams, *havingParams, *limitParams)
         return SQLWithParams(sql, params)
     }
 }

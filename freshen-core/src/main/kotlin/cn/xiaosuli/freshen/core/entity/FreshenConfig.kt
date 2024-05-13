@@ -50,8 +50,8 @@ data class FreshenConfig(
     val tablePrefix: String? = null,
     val enabledUnderscoreToCamelCase: Boolean = true,
     val kTypeAndJDBCTypeMap: Map<KClass<*>, JDBCType> = defaultKTypeAndJDBCTypeMap,
-    val sqlAudit1: (sql: String, params: List<PrepareStatementParam>) -> Unit = { _, _ -> },
-    val sqlAudit2: (sql: String, params: List<PrepareStatementParam>?, elapsedTime: Long) -> Unit = { _, _, _ -> }
+    val sqlAudit1: (sql: String, params: Array<PrepareStatementParam>) -> Unit = { _, _ -> },
+    val sqlAudit2: (sql: String, params: Array<PrepareStatementParam>, elapsedTime: Long) -> Unit = { _, _, _ -> }
 )
 
 /**

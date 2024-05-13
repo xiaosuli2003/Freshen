@@ -1,5 +1,7 @@
 package com.xiaosuli.test
 
+import cn.xiaosuli.freshen.core.FreshenRuntimeConfig
+import cn.xiaosuli.freshen.core.builder.QueryConditionScope
 import cn.xiaosuli.freshen.core.crud.query
 import cn.xiaosuli.freshen.core.entity.FreshenConfig
 import cn.xiaosuli.freshen.core.runFreshen
@@ -11,6 +13,38 @@ import javax.sql.DataSource
 import kotlin.reflect.KProperty1
 
 class QueryTests {
+
+    @Test
+    fun test04() {
+        val sql = """select * from tb_student 
+            where  (id = ? or address = ?) 
+            or (id = ? or id in (?))    
+            limit ?"""
+        val connection = FreshenRuntimeConfig.dataSource.connection
+        val statement = connection.prepareStatement(sql)
+        statement.setString(1, "1")
+        statement.setString(2, "2")
+        statement.setString(3, "3")
+        statement.setString(4, "4")
+        statement.setInt(5, 5)
+        val executeQuery = statement.executeQuery()
+    }
+
+    class A<T> : QueryConditionScope<T>
+
+    @Test
+    fun test03() {
+        val a = A<Student2>()
+        with(a) {
+            val condition = Student2::id.eq("2")
+                .and {
+                    Student2::id.eq("3") or Student2::address.eq("4")
+                }.or {
+                    Student2::id.eq("5") or Student2::id.`in`(6)
+                }
+            condition.queryParams.forEach { log.info(it.toString()) }
+        }
+    }
 
     @Test
     fun test02() {
@@ -31,13 +65,13 @@ class QueryTests {
             // from("tb_student")
 
             // where 方式1
-            // where(Student2::id.eq("3") and Student2::name.eq("xiaosuli"))
-            // 方式2
+            where(Student2::id eq 1)
+            // where 方式2
             // where {
             //     and {
-            //         Student2::id.eq("1") or Student2::address.eq("1")
+            //         Student2::id.eq(3) or Student2::address.eq("4")
             //     }.or {
-            //         Student2::id.eq("1") or Student2::address.eq("1")
+            //         Student2::id.eq(5) or Student2::id.`in`(6)
             //     }
             // }
 
@@ -45,21 +79,21 @@ class QueryTests {
             // groupBy(Student2::id, Student2::birthday)
 
             // having 方式1
-            having(Student2::id.eq("3") and Student2::name.eq("xiaosuli"))
-            // having 方式2
-            having {
-                and {
-                    Student2::id.eq("1") or Student2::address.eq("1")
-                }.or {
-                    Student2::id.eq("1") or Student2::address.eq("1")
-                }
-            }
+            // having(Student2::id.eq("7") and Student2::name.eq("8"))
+            // // having 方式2
+            // having {
+            //     and {
+            //         Student2::id.eq("9") or Student2::address.eq("10")
+            //     }.or {
+            //         Student2::id.eq("11") or Student2::address.eq("12")
+            //     }
+            // }
 
             // order by 子句开发完毕
             // orderBy(Student2::id.desc, Student2::birthday.asc)
 
             // limit 子句开发完毕
-            // limit(1)
+            limit(13)
             // limit(1, 1)
         }.forEach(::println)
     }
@@ -92,15 +126,15 @@ class QueryTests {
                     dataSource = getDruidDataSource(),
                     tablePrefix = "tb_",
                     sqlAudit1 = { sql, params ->
-                        log.debug("sql: $sql")
-                        params.forEach {
-                            log.debug("param ---> index: ${it.index}; type: ${it.type}, value: ${it.value}")
+                        log.debug("sqlAudit1 ---> sql: $sql")
+                        params.forEachIndexed { index, param ->
+                            log.debug("sqlAudit1 ---> param ---> index: {}; value: {}", index + 1, param.value)
                         }
                     },
                     sqlAudit2 = { sql, params, elapsedTime ->
-                        log.debug("sql: $sql, 耗时: ${elapsedTime}ms")
-                        params?.forEach {
-                            log.debug("param ---> index: ${it.index}; type: ${it.type}, value: ${it.value}")
+                        log.debug("sqlAudit2 ---> sql: $sql, 耗时: ${elapsedTime}ms")
+                        params.forEachIndexed { index, param ->
+                            log.debug("sqlAudit2 ---> param ---> index: {}; value: {}", index + 1, param.value)
                         }
                     }
                 )

@@ -16,7 +16,6 @@
 
 package cn.xiaosuli.freshen.core.builder
 
-import cn.xiaosuli.freshen.core.utils.column
 import kotlin.reflect.KProperty1
 
 /**
@@ -30,7 +29,8 @@ interface QueryConditionScope<T> {
      * @param value 模糊匹配的值
      * @return QueryCondition
      */
-    infix fun <V> KProperty1<T, V>.eq(value: V): QueryCondition = QueryCondition.BaseCondition("$column = \"$value\"")
+    infix fun <V : Any?> KProperty1<T, V>.eq(value: V): QueryCondition =
+        QueryCondition.BaseCondition(this, "=", value as Any)
 
     /**
      * 不等于(!=)
@@ -38,7 +38,8 @@ interface QueryConditionScope<T> {
      * @param value 模糊匹配的值
      * @return QueryCondition
      */
-    infix fun <V> KProperty1<T, V>.ne(value: V): QueryCondition = QueryCondition.BaseCondition("$column != \"$value\"")
+    infix fun <V : Any?> KProperty1<T, V>.ne(value: V): QueryCondition =
+        QueryCondition.BaseCondition(this, "!=", value as Any)
 
     /**
      * 大于(>)
@@ -46,7 +47,8 @@ interface QueryConditionScope<T> {
      * @param value 模糊匹配的值
      * @return QueryCondition
      */
-    infix fun <V> KProperty1<T, V>.gt(value: V): QueryCondition = QueryCondition.BaseCondition("$column > \"$value\"")
+    infix fun <V : Any?> KProperty1<T, V>.gt(value: V): QueryCondition =
+        QueryCondition.BaseCondition(this, ">", value as Any)
 
     /**
      * 小于(<)
@@ -54,7 +56,8 @@ interface QueryConditionScope<T> {
      * @param value 模糊匹配的值
      * @return QueryCondition
      */
-    infix fun <V> KProperty1<T, V>.lt(value: V): QueryCondition = QueryCondition.BaseCondition("$column < \"$value\"")
+    infix fun <V : Any?> KProperty1<T, V>.lt(value: V): QueryCondition =
+        QueryCondition.BaseCondition(this, "<", value as Any)
 
     /**
      * 小于等于(<=)
@@ -62,7 +65,8 @@ interface QueryConditionScope<T> {
      * @param value 模糊匹配的值
      * @return QueryCondition
      */
-    infix fun <V> KProperty1<T, V>.le(value: V): QueryCondition = QueryCondition.BaseCondition("$column <= \"$value\"")
+    infix fun <V : Any?> KProperty1<T, V>.le(value: V): QueryCondition =
+        QueryCondition.BaseCondition(this, "<=", value as Any)
 
     /**
      * 大于等于(>=)
@@ -70,7 +74,8 @@ interface QueryConditionScope<T> {
      * @param value 模糊匹配的值
      * @return QueryCondition
      */
-    infix fun <V> KProperty1<T, V>.ge(value: V): QueryCondition = QueryCondition.BaseCondition("$column >= \"$value\"")
+    infix fun <V : Any?> KProperty1<T, V>.ge(value: V): QueryCondition =
+        QueryCondition.BaseCondition(this, ">=", value as Any)
 
     /**
      * in(`in(value1,value2,...)`)
@@ -78,10 +83,8 @@ interface QueryConditionScope<T> {
      * @param values 区间
      * @return QueryCondition
      */
-    fun <V> KProperty1<T, V>.`in`(vararg values: V): QueryCondition {
-        val list = values.joinToString(",") { "\"$it\"" }
-        return QueryCondition.BaseCondition("$column in ($list)")
-    }
+    fun <V : Any> KProperty1<T, V>.`in`(vararg values: V): QueryCondition =
+        QueryCondition.InCondition(this, "in", values.toList())
 
     /**
      * not in(`not in(value1,value2,...)`)
@@ -89,10 +92,8 @@ interface QueryConditionScope<T> {
      * @param values 区间
      * @return QueryCondition
      */
-    fun <V> KProperty1<T, V>.notIn(vararg values: V): QueryCondition {
-        val list = values.joinToString(",") { "\"$it\"" }
-        return QueryCondition.BaseCondition("$column not in ($list)")
-    }
+    fun <V : Any> KProperty1<T, V>.notIn(vararg values: V): QueryCondition =
+        QueryCondition.InCondition(this, "not in", values.toList())
 
     /**
      * between and(`between value1 and value2`)
@@ -101,7 +102,7 @@ interface QueryConditionScope<T> {
      * @return QueryCondition
      */
     infix fun <V : Comparable<V>> KProperty1<T, V>.`in`(range: ClosedRange<V>): QueryCondition =
-        QueryCondition.BaseCondition("$column between ${range.start} and ${range.endInclusive}")
+        QueryCondition.BetweenCondition(this, "between", range)
 
     /**
      * not between and(`between value1 and value2`)
@@ -110,7 +111,7 @@ interface QueryConditionScope<T> {
      * @return QueryCondition
      */
     infix fun <V : Comparable<V>> KProperty1<T, V>.notIn(range: ClosedRange<V>): QueryCondition =
-        QueryCondition.BaseCondition("$column not between ${range.start} and ${range.endInclusive}")
+        QueryCondition.BaseCondition(this, "not between", range)
 
     /**
      * like模糊匹配，需要手拼%
@@ -120,7 +121,7 @@ interface QueryConditionScope<T> {
      * @return QueryCondition
      */
     infix fun KProperty1<T, *>.like(value: String): QueryCondition =
-        QueryCondition.BaseCondition("$column like \"$value\"")
+        QueryCondition.BaseCondition(this, "like", value)
 
     /**
      * not like模糊匹配，需要手拼%
@@ -130,19 +131,21 @@ interface QueryConditionScope<T> {
      * @return QueryCondition
      */
     infix fun KProperty1<T, *>.notLike(value: String): QueryCondition =
-        QueryCondition.BaseCondition("$column not like \"$value\"")
+        QueryCondition.BaseCondition(this, "not like", value)
 
     /**
      * is null(`is null`)
      *
      * @return QueryCondition
      */
-    fun KProperty1<T, *>.isNull(): QueryCondition = QueryCondition.BaseCondition("$column is null")
+    fun KProperty1<T, *>.isNull(): QueryCondition =
+        QueryCondition.NullCondition(this, "is null")
 
     /**
      * is not null(`is not null`)
      *
      * @return QueryCondition
      */
-    fun KProperty1<T, *>.isNotNull(): QueryCondition = QueryCondition.BaseCondition("$column is not null")
+    fun KProperty1<T, *>.isNotNull(): QueryCondition =
+        QueryCondition.NullCondition(this, "is not null")
 }

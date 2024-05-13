@@ -17,13 +17,25 @@
 package cn.xiaosuli.freshen.core.builder
 
 import cn.xiaosuli.freshen.core.anno.FreshenInternalApi
+import cn.xiaosuli.freshen.core.entity.PrepareStatementParam
+import cn.xiaosuli.freshen.core.utils.column
+import kotlin.reflect.KClass
+import kotlin.reflect.KProperty1
 
 /**
  * 条件构造器
  */
 @FreshenInternalApi
 sealed class QueryCondition {
+    /**
+     * 条件lambda转SQL语句
+     */
     abstract fun toSql(): String
+
+    /**
+     * 占位参数列表
+     */
+    abstract val queryParams: Array<PrepareStatementParam>
 
     /**
      * 用于表示逻辑操作
@@ -57,11 +69,23 @@ sealed class QueryCondition {
             override val next: QueryCondition,
             override var addParentheses: Boolean = false
         ) : LogicalExpression() {
+
+            /**
+             * 条件转sql
+             *
+             * @return `(current and next)`
+             */
             override fun toSql(): String = if (addParentheses) {
                 "(${current.toSql()} and ${next.toSql()})"
             } else {
                 "${current.toSql()} and ${next.toSql()}"
             }
+
+            /**
+             * 占位参数列表
+             */
+            override val queryParams: Array<PrepareStatementParam> =
+                arrayOf(*current.queryParams, *next.queryParams)
         }
 
         /**
@@ -77,11 +101,22 @@ sealed class QueryCondition {
             override val next: QueryCondition,
             override var addParentheses: Boolean = false
         ) : LogicalExpression() {
+            /**
+             * 条件转sql
+             *
+             * @return `(current or next)`
+             */
             override fun toSql(): String = if (addParentheses) {
                 "(${current.toSql()} or ${next.toSql()})"
             } else {
                 "${current.toSql()} or ${next.toSql()}"
             }
+
+            /**
+             * 占位参数列表
+             */
+            override val queryParams: Array<PrepareStatementParam> =
+                arrayOf(*current.queryParams, *next.queryParams)
         }
     }
 
@@ -90,6 +125,7 @@ sealed class QueryCondition {
      */
     data object EmptyCondition : QueryCondition() {
         override fun toSql(): String = "1 = 1"
+        override val queryParams: Array<PrepareStatementParam> = emptyArray()
     }
 
     /**
@@ -109,6 +145,7 @@ sealed class QueryCondition {
          */
         class Exists(override val subquery: String) : ExistsCondition() {
             override fun toSql(): String = "exists ($subquery)"
+            override val queryParams: Array<PrepareStatementParam> = emptyArray()
         }
 
         /**
@@ -119,6 +156,7 @@ sealed class QueryCondition {
          */
         class NotExists(override val subquery: String) : ExistsCondition() {
             override fun toSql(): String = "not exists ($subquery)"
+            override val queryParams: Array<PrepareStatementParam> = emptyArray()
         }
     }
 
@@ -127,14 +165,94 @@ sealed class QueryCondition {
      */
     data class NotCondition(val notCondition: QueryCondition) : QueryCondition() {
         override fun toSql(): String = "not (${notCondition.toSql()})"
+        override val queryParams: Array<PrepareStatementParam> = notCondition.queryParams
     }
 
     /**
      * 用于表示基础条件
+     *
+     * @param property 属性
+     * @param operator 操作符
+     * @param value 值
      */
-    data class BaseCondition(val baseCondition: String) :
-        QueryCondition() {
-        override fun toSql(): String = baseCondition
+    data class BaseCondition<T>(
+        val property: KProperty1<T, *>,
+        val operator: String,
+        val value: Any
+    ) : QueryCondition() {
+        override fun toSql(): String = "${property.column} $operator ?"
+
+        /**
+         * 占位参数列表
+         */
+        override val queryParams: Array<PrepareStatementParam> =
+            arrayOf(PrepareStatementParam(property.returnType.classifier as KClass<*>, value))
+    }
+
+    /**
+     * 用于表示 null / not null 条件
+     *
+     * @param property 属性
+     * @param operator 操作符
+     */
+    data class NullCondition<T>(
+        val property: KProperty1<T, *>,
+        val operator: String,
+    ) : QueryCondition() {
+        override fun toSql(): String = "${property.column} $operator"
+
+        /**
+         * 占位参数列表
+         */
+        override val queryParams: Array<PrepareStatementParam> = emptyArray()
+    }
+
+    /**
+     * 用于表示 between and / not between and条件
+     *
+     * @param property 属性
+     * @param operator 操作符
+     */
+    data class BetweenCondition<T, V : Comparable<V>>(
+        val property: KProperty1<T, V>,
+        val operator: String,
+        val range: ClosedRange<V>
+    ) : QueryCondition() {
+        override fun toSql(): String {
+            return "${property.column} $operator ? and ?"
+        }
+
+        /**
+         * 占位参数列表
+         */
+        override val queryParams: Array<PrepareStatementParam> = arrayOf(
+            PrepareStatementParam(property.returnType.classifier as KClass<*>, range.start),
+            PrepareStatementParam(property.returnType.classifier as KClass<*>, range.endInclusive)
+        )
+    }
+
+    /**
+     * 用于表示 in /not in 条件
+     *
+     * @param property 属性
+     * @param operator 操作符
+     */
+    data class InCondition<T>(
+        val property: KProperty1<T, *>,
+        val operator: String,
+        val values: List<Any>
+    ) : QueryCondition() {
+        override fun toSql(): String {
+            val list = values.joinToString(",") { "?" }
+            return "${property.column} $operator ($list)"
+        }
+
+        /**
+         * 占位参数列表
+         */
+        override val queryParams: Array<PrepareStatementParam> = values.map {
+            PrepareStatementParam(property.returnType.classifier as KClass<*>, it)
+        }.toTypedArray()
     }
 
     /**
