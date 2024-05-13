@@ -37,7 +37,7 @@ object FreshenRuntimeConfig {
     /**
      * 主键生成策略
      */
-    var keyStrategy: KeyStrategy = KeyStrategy.None
+    var keyGenerator: KeyGenerator = KeyGenerator.NONE
 
     /**
      * 逻辑删除配置

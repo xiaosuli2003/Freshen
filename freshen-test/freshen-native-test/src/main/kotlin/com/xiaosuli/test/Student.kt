@@ -1,5 +1,7 @@
 package com.xiaosuli.test
 
+import cn.xiaosuli.freshen.core.anno.Column
+import cn.xiaosuli.freshen.core.anno.Id
 import cn.xiaosuli.freshen.core.anno.Table
 import java.time.LocalDateTime
 
@@ -17,7 +19,9 @@ class Student {
 
 @Table("tb_student")
 data class Student2 (
+    @Id("id22")
     val id: Long,
+    @Column("name")
     val name: String,
     val gender: String,
     val birthday: LocalDateTime,

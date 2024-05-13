@@ -17,15 +17,15 @@
 package cn.xiaosuli.freshen.core.builder
 
 import cn.xiaosuli.freshen.core.FreshenRuntimeConfig
-import cn.xiaosuli.freshen.core.anno.Column
 import cn.xiaosuli.freshen.core.anno.FreshenInternalApi
-import cn.xiaosuli.freshen.core.anno.Id
 import cn.xiaosuli.freshen.core.anno.Table
 import cn.xiaosuli.freshen.core.entity.PrepareStatementParam
 import cn.xiaosuli.freshen.core.entity.SQLWithParams
+import cn.xiaosuli.freshen.core.utils.column
 import cn.xiaosuli.freshen.core.utils.toUnderscore
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty1
+import kotlin.reflect.full.findAnnotation
 import kotlin.reflect.full.memberProperties
 
 /**
@@ -73,7 +73,6 @@ open class QueryBuilder<T : Any> : QueryConditionScope<T>, QueryMethodScope<T>, 
 
     /**
      * SQL占位参数列表
-     *
      * TODO: "要实现这里的逻辑"
      */
     override val params: List<PrepareStatementParam>
@@ -91,7 +90,21 @@ open class QueryBuilder<T : Any> : QueryConditionScope<T>, QueryMethodScope<T>, 
     fun select(vararg column: String) {
         select = buildString {
             append("select ")
-            column.forEach { append("${it.toUnderscore()},") }
+            column.forEach { append("${it},") }
+        }.dropLast(1)
+    }
+
+    /**
+     * 设置要查询的列，并去重
+     * * 建议直接硬编码列名，不要通过外面传入，否则可能会导致SQL注入问题
+     * * 建议使用selectDistinct(vararg columns: KProperty1<T,*>)这样的方法
+     *
+     * @param column 列名
+     */
+    fun selectDistinct(vararg column: String) {
+        select = buildString {
+            append("select distinct")
+            column.forEach { append("${it},") }
         }.dropLast(1)
     }
 
@@ -105,6 +118,15 @@ open class QueryBuilder<T : Any> : QueryConditionScope<T>, QueryMethodScope<T>, 
     }
 
     /**
+     * 设置要查询的列，并去重
+     *
+     * @param columns 列名
+     */
+    fun selectDistinct(vararg columns: KProperty1<T, *>) {
+        selectDistinct(columns.toList())
+    }
+
+    /**
      * 设置要查询的列
      *
      * @param columns 列名
@@ -112,22 +134,21 @@ open class QueryBuilder<T : Any> : QueryConditionScope<T>, QueryMethodScope<T>, 
     fun select(columns: List<KProperty1<T, *>>) {
         select = buildString {
             append("select ")
-            columns.forEach { column ->
-                val value = column.annotations.filterIsInstance<Id>().firstOrNull()?.value
-                    ?: column.annotations.filterIsInstance<Column>().firstOrNull()?.value
-                    ?: column.name.toUnderscore()
-                append("${value},")
-            }
+            columns.forEach { append("${it.column},") }
         }.dropLast(1)
     }
 
     /**
-     * 属性转字段（列）
+     * 设置要查询的列，并去重
      *
-     * @return 所有字段集合
+     * @param columns 列名
      */
-    val KProperty1<T, *>.column: String
-        get() = name.toUnderscore()
+    fun selectDistinct(columns: List<KProperty1<T, *>>) {
+        select = buildString {
+            append("select distinct")
+            columns.forEach { append("${it.column},") }
+        }.dropLast(1)
+    }
 
     /**
      * 查询全部字段
@@ -158,7 +179,7 @@ open class QueryBuilder<T : Any> : QueryConditionScope<T>, QueryMethodScope<T>, 
     fun from(kClass: KClass<T>) {
         // 获取表名，如果有注解，则使用注解的值，否则走统一前缀
         // 如果设置统一前缀，则标名为统一前缀+类名，否则直接使用类名
-        val table = kClass.annotations.filterIsInstance<Table>().firstOrNull()?.value
+        val table = kClass.findAnnotation<Table>()?.value
             ?: FreshenRuntimeConfig.tablePrefix?.let {
                 "$it${kClass.simpleName!!.toUnderscore()}"
             }
@@ -174,7 +195,7 @@ open class QueryBuilder<T : Any> : QueryConditionScope<T>, QueryMethodScope<T>, 
     inline fun <reified T : Any> from() {
         // 获取表名，如果有注解，则使用注解的值，否则走统一前缀
         // 如果设置统一前缀，则标名为统一前缀+类名，否则直接使用类名
-        val table = T::class.annotations.filterIsInstance<Table>().firstOrNull()?.value
+        val table = T::class.findAnnotation<Table>()?.value
             ?: FreshenRuntimeConfig.tablePrefix?.let {
                 "$it${T::class.simpleName!!.toUnderscore()}"
             }
@@ -216,7 +237,7 @@ open class QueryBuilder<T : Any> : QueryConditionScope<T>, QueryMethodScope<T>, 
         groupBy = buildString {
             append("group by ")
             columns.forEach {
-                append(it.name.toUnderscore())
+                append(it.column)
                 append(",")
             }
         }.dropLast(1)
@@ -224,8 +245,25 @@ open class QueryBuilder<T : Any> : QueryConditionScope<T>, QueryMethodScope<T>, 
 
     // having ==================================================
 
-    fun having() {
-        having = "having"
+    /**
+     * 构建having子句
+     * TODO: 这两个having需要改为？占位形式
+     *
+     * @param queryCondition 查询条件
+     */
+    fun having(queryCondition: QueryCondition) {
+        having = "having ${queryCondition.toSql()}"
+    }
+
+    /**
+     * 构建having子句
+     *  TODO: 这两个having需要改为？占位形式
+     *
+     * @param action 查询lambda
+     */
+    fun having(action: QueryCondition.() -> QueryCondition) {
+        val queryCondition = QueryCondition.EmptyCondition
+        having = "having ${queryCondition.action().toSql()}"
     }
 
     // order by ==================================================
@@ -256,13 +294,13 @@ open class QueryBuilder<T : Any> : QueryConditionScope<T>, QueryMethodScope<T>, 
      * 设置升序
      */
     val KProperty1<*, *>.asc: OrderByCondition
-        get() = OrderByCondition("${name.toUnderscore()} asc")
+        get() = OrderByCondition("$column asc")
 
     /**
      * 设置降序
      */
     val KProperty1<*, *>.desc: OrderByCondition
-        get() = OrderByCondition("${name.toUnderscore()} desc")
+        get() = OrderByCondition("$column desc")
 
     // limit ==================================================
 

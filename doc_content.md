@@ -6,14 +6,10 @@
 ### todo:
 1. 启动类支持配置文件方式启动Freshen
 2. where条件的非聚合函数
-3. where和having的条件拼接（难题）
-4. 反射和考虑@Id，@Column注解
-5. 多表支持，form两个及以上表，join系列，union、union all、union distinct系列
-6. 嵌套查询，子查询
-7. 目前select只考虑了单表情况，如果要多表，QueryAsBuilder需要重写
-8. 虽然搞了prepareStatement，但是没有使用，因为参数在sql中写死了（涉及limit，where，having）
-9. 对于`where(方法链式调用)`生成的sql优先级默认为书写顺序（需要优化）
-10. 对于`where(lambda表达式)`生成的sql有问题，由于lambda默认返回最后一行代码，所以内嵌多个lambda，只有最后一个拼接进去，需要处理。
+4. 多表支持，form两个及以上表，join系列，union、union all、union系列
+5. 嵌套查询，子查询
+6. 目前select只考虑了单表情况，如果要多表，QueryAsBuilder需要重写
+7. _虽然搞了prepareStatement，但是没有使用，因为参数在sql中写死了（涉及limit，where，having）_
 
 随想：
 关于IReop类的构想
@@ -34,6 +30,8 @@ https://github.com/baomidou/mybatis-plus/issues/5764
    类型不匹配。
    要求:Map<KProperty1<*, *>, JDBCType>?
    实际:Map<KProperty1<Student2, {Comparable*>? & java.io.Serializable?}>, JDBCType>
+3. where和having的条件，所有条件需要链式调用，就算用lambda，内部也需要链式调用
+9. where(condition)和where(lambda)区别是，where(condition)不加括号，where(lambda)会给lambda中的条件整体加上括号
 
 随想：
 我本来想把FreshenRuntimeConfig弄成internal的，避免外部调用，

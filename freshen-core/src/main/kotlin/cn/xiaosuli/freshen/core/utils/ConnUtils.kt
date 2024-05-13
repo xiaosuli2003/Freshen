@@ -20,6 +20,7 @@ import cn.xiaosuli.freshen.core.FreshenRuntimeConfig
 import cn.xiaosuli.freshen.core.anno.FreshenInternalApi
 import cn.xiaosuli.freshen.core.entity.PrepareStatementParam
 import java.math.BigDecimal
+import java.math.BigInteger
 import java.sql.*
 import java.time.LocalDateTime
 import kotlin.reflect.KMutableProperty1
@@ -62,7 +63,7 @@ inline fun <reified R> ResultSet.getObjForHasArgsConstructor(
     R::class.members.filterIsInstance<KProperty1<R, *>>().forEach { kProperty1 ->
         hasArgsConstructor.parameters.forEachIndexed { index, parameter ->
             if (parameter.name == kProperty1.name) {
-                val name = parameter.name!!.toUnderscore()
+                val name = kProperty1.column
                 val jdbcType =
                     typeMap?.get(kProperty1) ?: FreshenRuntimeConfig.kTypeAndJDBCTypeMap[parameter.type.classifier]
                 when (jdbcType) {
@@ -104,7 +105,7 @@ inline fun <reified R> ResultSet.getObjForNoArgsConstructor(
 ): R {
     val entity = R::class.constructors.firstOrNull { it.parameters.isEmpty() }!!.call()
     R::class.members.filterIsInstance<KProperty1<R, *>>().forEach { kProperty1 ->
-        val name = kProperty1.name.toUnderscore()
+        val name = kProperty1.column
         // 如果有传入typeMap，则使用typeMap中的值，否则使用默认的
         val jdbcType =
             typeMap?.get(kProperty1) ?: FreshenRuntimeConfig.kTypeAndJDBCTypeMap[kProperty1.returnType.classifier]
@@ -125,11 +126,12 @@ inline fun <reified R> ResultSet.getObjForNoArgsConstructor(
 
             JDBCType.DATE -> kmp.setter.call(entity, getDate(name).toLocalDate())
             JDBCType.TIME -> kmp.setter.call(entity, getTime(name).toLocalTime())
-            JDBCType.TIMESTAMP -> if(kProperty1.returnType.classifier == LocalDateTime::class){
+            JDBCType.TIMESTAMP -> if (kProperty1.returnType.classifier == LocalDateTime::class) {
                 kmp.setter.call(entity, getTimestamp(name).toLocalDateTime())
-            }else{
+            } else {
                 kmp.setter.call(entity, getTimestamp(name))
             }
+
             else -> kmp.setter.call(entity, getObject(name))
         }
     }
@@ -145,7 +147,7 @@ fun PreparedStatement.setParams(params: List<PrepareStatementParam>?) {
     params?.forEach {
         when (it.type.returnType.classifier) {
             Int::class -> setInt(it.index, it.value as Int)
-            Long::class -> setLong(it.index, it.value as Long)
+            Long::class, BigInteger::class -> setLong(it.index, it.value as Long)
             String::class -> setString(it.index, it.value as String)
             Boolean::class -> setBoolean(it.index, it.value as Boolean)
             Byte::class -> setByte(it.index, it.value as Byte)

@@ -17,21 +17,16 @@
 package cn.xiaosuli.freshen.core.builder
 
 import cn.xiaosuli.freshen.core.anno.FreshenInternalApi
-import cn.xiaosuli.freshen.core.utils.toUnderscore
-import kotlin.reflect.KProperty1
 
 /**
  * 条件构造器
- *
- * * 写这个代码把CPU差点干烧了，整个代码大纲是通义千问生成的，我修改了一下，
- * * 说实话，我还是看不懂怎么就把条件拼接好了。
  */
 @FreshenInternalApi
 sealed class QueryCondition {
     abstract fun toSql(): String
 
     /**
-     * 用于内部表示逻辑操作
+     * 用于表示逻辑操作
      */
     sealed class LogicalExpression : QueryCondition() {
         /**
@@ -45,17 +40,28 @@ sealed class QueryCondition {
         abstract val next: QueryCondition
 
         /**
+         * 是否添加括号
+         */
+        abstract var addParentheses: Boolean
+
+        /**
          * 用and拼接两个条件
          *
          * @param current 当前条件
          * @param next 下一个条件
+         * @param addParentheses 是否添加括号
          * @return `(current and next)`
          */
         class And(
             override val current: QueryCondition,
-            override val next: QueryCondition
+            override val next: QueryCondition,
+            override var addParentheses: Boolean = false
         ) : LogicalExpression() {
-            override fun toSql(): String = "(${current.toSql()} and ${next.toSql()})"
+            override fun toSql(): String = if (addParentheses) {
+                "(${current.toSql()} and ${next.toSql()})"
+            } else {
+                "${current.toSql()} and ${next.toSql()}"
+            }
         }
 
         /**
@@ -63,13 +69,19 @@ sealed class QueryCondition {
          *
          * @param current 当前条件
          * @param next 下一个条件
+         * @param addParentheses 是否添加括号
          * @return `(current or next)`
          */
         class Or(
             override val current: QueryCondition,
-            override val next: QueryCondition
+            override val next: QueryCondition,
+            override var addParentheses: Boolean = false
         ) : LogicalExpression() {
-            override fun toSql(): String = "(${current.toSql()} or ${next.toSql()})"
+            override fun toSql(): String = if (addParentheses) {
+                "(${current.toSql()} or ${next.toSql()})"
+            } else {
+                "${current.toSql()} or ${next.toSql()}"
+            }
         }
     }
 
@@ -81,29 +93,97 @@ sealed class QueryCondition {
     }
 
     /**
-     * 用于内部表示基础条件
+     * 用于表示`exists/not exists`条件
      */
-    data class BaseCondition(val property: KProperty1<*, *>, val operation: String, val value: String) :
-        QueryCondition() {
-        override fun toSql(): String = "${property.name.toUnderscore()} $operation '$value'"
+    sealed class ExistsCondition : QueryCondition() {
+        /**
+         * 子查询
+         */
+        abstract val subquery: String
+
+        /**
+         * 存在子查询
+         *
+         * @param subquery 子查询
+         * @return `exists (subquery)`
+         */
+        class Exists(override val subquery: String) : ExistsCondition() {
+            override fun toSql(): String = "exists ($subquery)"
+        }
+
+        /**
+         * 不存在子查询
+         *
+         * @param subquery 子查询
+         * @return `exists (subquery)`
+         */
+        class NotExists(override val subquery: String) : ExistsCondition() {
+            override fun toSql(): String = "not exists ($subquery)"
+        }
     }
 
+    /**
+     * 用于表示not条件
+     */
+    data class NotCondition(val notCondition: QueryCondition) : QueryCondition() {
+        override fun toSql(): String = "not (${notCondition.toSql()})"
+    }
+
+    /**
+     * 用于表示基础条件
+     */
+    data class BaseCondition(val baseCondition: String) :
+        QueryCondition() {
+        override fun toSql(): String = baseCondition
+    }
+
+    /**
+     * 同sql中and条件
+     */
     infix fun and(next: QueryCondition): QueryCondition = LogicalExpression.And(this, next)
 
-    fun and(action: () -> QueryCondition): QueryCondition = action.invoke()
-    fun or(action: () -> QueryCondition): QueryCondition = action.invoke()
+    /**
+     * 同sql中and条件
+     */
+    fun and(action: () -> QueryCondition): QueryCondition {
+        val logicalExpression = action.invoke() as LogicalExpression
+        logicalExpression.addParentheses = true
+        return LogicalExpression.And(this, logicalExpression)
+    }
 
+    /**
+     * 同sql中or条件
+     */
     infix fun or(next: QueryCondition): QueryCondition = LogicalExpression.Or(this, next)
 
-    fun not(expression: String) {
-
+    /**
+     * 同sql中or条件
+     */
+    fun or(action: () -> QueryCondition): QueryCondition {
+        val logicalExpression = action.invoke() as LogicalExpression
+        logicalExpression.addParentheses = true
+        return LogicalExpression.Or(this, logicalExpression)
     }
 
-    fun exists(sql: String) {
+    /**
+     * 同sql中not条件
+     */
+    infix fun not(notCondition: QueryCondition): QueryCondition = NotCondition(notCondition)
 
-    }
+    /**
+     * 同sql中not条件
+     */
+    fun not(action: () -> QueryCondition): QueryCondition = NotCondition(action.invoke())
 
-    fun notExists(sql: String) {
+    /**
+     * 同sql中exists条件
+     * @param sql 子查询
+     */
+    fun exists(sql: String) = ExistsCondition.Exists(sql)
 
-    }
+    /**
+     * 同sql中not exists条件
+     * @param sql 子查询
+     */
+    fun notExists(sql: String) = ExistsCondition.NotExists(sql)
 }

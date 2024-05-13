@@ -33,20 +33,27 @@ class QueryTests {
             // where 方式1
             // where(Student2::id.eq("3") and Student2::name.eq("xiaosuli"))
             // 方式2
-            where {
-                and {
-                    Student2::id.eq("1") or Student2::address.eq("1")
-                }
-                or {
-                    Student2::id.eq("1") or Student2::address.eq("1")
-                }
-            }
+            // where {
+            //     and {
+            //         Student2::id.eq("1") or Student2::address.eq("1")
+            //     }.or {
+            //         Student2::id.eq("1") or Student2::address.eq("1")
+            //     }
+            // }
 
             // group by 子句开发完毕
             // groupBy(Student2::id, Student2::birthday)
 
-            // having
-            // having()
+            // having 方式1
+            having(Student2::id.eq("3") and Student2::name.eq("xiaosuli"))
+            // having 方式2
+            having {
+                and {
+                    Student2::id.eq("1") or Student2::address.eq("1")
+                }.or {
+                    Student2::id.eq("1") or Student2::address.eq("1")
+                }
+            }
 
             // order by 子句开发完毕
             // orderBy(Student2::id.desc, Student2::birthday.asc)

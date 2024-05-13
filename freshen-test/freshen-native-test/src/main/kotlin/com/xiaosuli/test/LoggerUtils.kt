@@ -1,7 +1,8 @@
 package com.xiaosuli.test
 
-import org.apache.log4j.Logger
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
 class LoggerUtils
 
-val log: Logger = Logger.getLogger(LoggerUtils::class.java)
+val log: Logger = LoggerFactory.getLogger(LoggerUtils::class.java)

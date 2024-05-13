@@ -19,10 +19,16 @@ package cn.xiaosuli.freshen.core.anno
 /**
  * 列注解
  *
- * @property value 列名
+ * @property value 列名，默认为属性名
+ * @property ignore 是否忽略该列，默认为false
+ * @property onInsertValue insert时该列的值，你设置的值会直接被拼接到sql，默认为空
+ * @property onUpdateValue update时该列的值，你设置的值会直接被拼接到sql，默认为空
  */
 @MustBeDocumented
 @Target(AnnotationTarget.PROPERTY)
 annotation class Column(
-    val value: String
+    val value: String = "",
+    val ignore: Boolean = false,
+    val onInsertValue: String = "",
+    val onUpdateValue: String = ""
 )

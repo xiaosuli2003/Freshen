@@ -15,7 +15,8 @@ dependencies {
     runtimeOnly("com.mysql:mysql-connector-j:8.2.0")
     implementation("org.projectlombok:lombok:1.18.32")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.1")
-    implementation("log4j:log4j:1.2.17")
+    implementation("ch.qos.logback:logback-classic:1.5.6")
+    implementation("org.slf4j:slf4j-api:2.0.13")
     testImplementation(kotlin("test"))
     implementation(kotlin("reflect"))
 }

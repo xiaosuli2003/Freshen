@@ -16,13 +16,17 @@
 
 package cn.xiaosuli.freshen.core.anno
 
+import cn.xiaosuli.freshen.core.entity.KeyGenerator
+
 /**
  * 主键注解
  *
- * @property value 数据库主键名
+ * @property value 数据库主键名，默认为属性名
+ * @property keyGenerator 指定主键生成器，默认为NONE（用户手动设置，或数据库自增）
  */
 @MustBeDocumented
 @Target(AnnotationTarget.PROPERTY)
 annotation class Id(
-    val value: String = "id"
+    val value: String = "",
+    val keyGenerator: KeyGenerator = KeyGenerator.NONE
 )

@@ -16,7 +16,7 @@
 
 package cn.xiaosuli.freshen.core.builder
 
-import cn.xiaosuli.freshen.core.utils.toUnderscore
+import cn.xiaosuli.freshen.core.utils.column
 import kotlin.reflect.KProperty1
 
 /**
@@ -36,33 +36,33 @@ interface QueryMethodScope<T> {
      *
      * @return count(column)
      */
-    fun count(column: KProperty1<T, *>): String = "count(${column.name.toUnderscore()})"
+    fun count(column: KProperty1<T, *>): String = "count(${column.column})"
 
     /**
      * sql的sum()函数
      *
      * @return sum(column)
      */
-    fun sum(column: KProperty1<T, *>): String = "sum(${column.name.toUnderscore()})"
+    fun sum(column: KProperty1<T, *>): String = "sum(${column.column})"
 
     /**
      * sql的avg()函数
      *
      * @return avg(column)
      */
-    fun avg(column: KProperty1<T, *>): String = "avg(${column.name.toUnderscore()})"
+    fun avg(column: KProperty1<T, *>): String = "avg(${column.column})"
 
     /**
      * sql的max()函数
      *
      * @return max(column)
      */
-    fun max(column: KProperty1<T, *>): String = "max(${column.name.toUnderscore()})"
+    fun max(column: KProperty1<T, *>): String = "max(${column.column})"
 
     /**
      * sql的min()函数
      *
      * @return min(column)
      */
-    fun min(column: KProperty1<T, *>): String = "min(${column.name.toUnderscore()})"
+    fun min(column: KProperty1<T, *>): String = "min(${column.column})"
 }

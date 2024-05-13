@@ -28,7 +28,7 @@ fun runFreshen(init: () -> FreshenConfig) {
     val freshenSLConfig = init()
     // 将获取的配置信息赋值给【运行时配置类】对应的属性
     FreshenRuntimeConfig.dataSource = freshenSLConfig.dataSource
-    FreshenRuntimeConfig.keyStrategy = freshenSLConfig.keyStrategy
+    FreshenRuntimeConfig.keyGenerator = freshenSLConfig.keyGenerator
     FreshenRuntimeConfig.logicDelete = freshenSLConfig.logicDelete
     FreshenRuntimeConfig.optimisticLock = freshenSLConfig.optimisticLock
     FreshenRuntimeConfig.tablePrefix = freshenSLConfig.tablePrefix

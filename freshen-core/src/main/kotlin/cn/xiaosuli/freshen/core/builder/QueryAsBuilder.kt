@@ -16,10 +16,8 @@
 
 package cn.xiaosuli.freshen.core.builder
 
-import cn.xiaosuli.freshen.core.anno.Column
 import cn.xiaosuli.freshen.core.anno.FreshenInternalApi
-import cn.xiaosuli.freshen.core.anno.Id
-import cn.xiaosuli.freshen.core.utils.toUnderscore
+import cn.xiaosuli.freshen.core.utils.column
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty1
 import kotlin.reflect.full.memberProperties
@@ -47,7 +45,7 @@ class QueryAsBuilder<T : Any> : QueryBuilder<T>() {
      * @param columns2 列名
      */
     fun select(columns1: List<KProperty1<T, *>>, vararg columns2: KProperty1<T, *>) {
-        select(columns1,columns2.toList())
+        select(columns1, columns2.toList())
     }
 
     /**
@@ -61,8 +59,8 @@ class QueryAsBuilder<T : Any> : QueryBuilder<T>() {
     fun select(columns1: List<String>, vararg columns2: String) {
         select = buildString {
             append("select ")
-            columns1.forEach { append("${it.toUnderscore()},") }
-            columns2.forEach { append("${it.toUnderscore()},") }
+            columns1.forEach { append("${it},") }
+            columns2.forEach { append("${it},") }
         }.dropLast(1)
     }
 
@@ -74,13 +72,8 @@ class QueryAsBuilder<T : Any> : QueryBuilder<T>() {
     fun select(vararg columnsList: List<KProperty1<T, *>>) {
         select = buildString {
             append("select ")
-            columnsList.forEach {
-                it.forEach { column ->
-                    val value = column.annotations.filterIsInstance<Id>().firstOrNull()?.value
-                        ?: column.annotations.filterIsInstance<Column>().firstOrNull()?.value
-                        ?: column.name.toUnderscore()
-                    append("${value},")
-                }
+            columnsList.forEach { columns ->
+                columns.forEach { append("${it.column},") }
             }
         }.dropLast(1)
     }
@@ -91,5 +84,5 @@ class QueryAsBuilder<T : Any> : QueryBuilder<T>() {
      * @return 所有字段集合
      */
     val KClass<T>.allColumns: List<String>
-        get() = memberProperties.map { it.name.toUnderscore() }
+        get() = memberProperties.map { it.column }
 }

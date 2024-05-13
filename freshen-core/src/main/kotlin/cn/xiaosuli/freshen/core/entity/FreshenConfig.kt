@@ -33,7 +33,7 @@ import kotlin.reflect.jvm.internal.impl.renderer.ClassifierNamePolicy.SHORT
  * * 执行时机不一样，sqlAudit1拿不到最终的执行耗时，但是优点是就算执行prepareStatement发生异常，也会打印SQL
  *
  * @property dataSource 数据源，必传
- * @property keyStrategy 主键生成策略，默认为None（用户自行处理）
+ * @property keyGenerator 指定主键生成器，默认为None（用户自行处理或数据库自增）
  * @property logicDelete 逻辑删除配置，默认为不启用
  * @property optimisticLock 乐观锁配置，默认为不启用
  * @property tablePrefix 设置表名的统一前缀，默认为空
@@ -44,7 +44,7 @@ import kotlin.reflect.jvm.internal.impl.renderer.ClassifierNamePolicy.SHORT
  */
 data class FreshenConfig(
     val dataSource: DataSource,
-    val keyStrategy: KeyStrategy = KeyStrategy.None,
+    val keyGenerator: KeyGenerator = KeyGenerator.NONE,
     val logicDelete: LogicDelete = LogicDelete.Disable,
     val optimisticLock: OptimisticLock = OptimisticLock.Disable,
     val tablePrefix: String? = null,
@@ -138,28 +138,28 @@ sealed class LogicDelete(
  *
  * @property keyGenerator 指定主键生成器
  */
-sealed class KeyStrategy(
+/*sealed class KeyStrategy(
     open val keyGenerator: KeyGenerator
 ) {
-    /**
+    *//**
      * 手动设置id
-     */
+     *//*
     data object None : KeyStrategy(KeyGenerator.NONE)
 
-    /**
+    *//**
      * 数据库自增
-     */
+     *//*
     data object Anto : KeyStrategy(KeyGenerator.NONE)
 
-    /**
+    *//**
      * 通过 KeyGenerator 生成器生成。
      *
      * @param keyGenerator 主键生成器
-     */
+     *//*
     class Generator(
         override val keyGenerator: KeyGenerator
     ) : KeyStrategy(keyGenerator)
-}
+}*/
 
 /**
  * 主键生成器
