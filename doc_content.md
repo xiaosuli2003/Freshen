@@ -4,16 +4,15 @@
 2. vt. 使清新；使新鲜；使精神焕发
 
 ### todo:
-1. 启动类支持配置文件方式启动Freshen
-2. 多表支持，form两个及以上表，join系列，union、union all、union系列
-3. 上面两个写完就写增删改函数、分页函数
-4. 事务支持
-5. spring支持
-6. 这5个写完，基本功能就写完了，就可以搞文档了
+1. 多表支持，form两个及以上表，join系列，union、union all、union系列
+2. 上面两个写完就写增删改函数
+3. 事务支持
+4. spring支持
+5. 这5个写完，基本功能就写完了，就可以搞文档了
 
-7. where条件的非聚合函数
-8. 嵌套查询，子查询
-9. 目前select只考虑了单表情况，如果要多表，QueryAsBuilder需要重写
+6. where条件的非聚合函数
+7. 嵌套查询，子查询
+8. 目前select只考虑了单表情况，如果要多表，QueryAsBuilder需要重写
 
 随想：
 关于IReop类的构想

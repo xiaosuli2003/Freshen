@@ -24,7 +24,6 @@ import kotlin.reflect.KClass
 
 /**
  * Freshen 运行时配置类
- * 使用internal关键字，避免外部调用
  * 如果在执行CRUD前，调用了【runFreshen】方法，那么理论上就不会发生空指针异常
  */
 @FreshenInternalApi
@@ -33,36 +32,43 @@ object FreshenRuntimeConfig {
      * 数据源，运行时赋值
      */
     lateinit var dataSource: DataSource
+        private set
 
     /**
      * 主键生成策略
      */
     var keyGenerator: KeyGenerator = KeyGenerator.NONE
+        private set
 
     /**
      * 逻辑删除配置
      */
     var logicDelete: LogicDelete = LogicDelete.Disable
+        private set
 
     /**
      * 乐观锁配置
      */
     var optimisticLock: OptimisticLock = OptimisticLock.Disable
+        private set
 
     /**
      * 表名前缀
      */
     var tablePrefix: String? = null
+        private set
 
     /**
      * 是否开启驼峰转下划线
      */
     var enabledUnderscoreToCamelCase: Boolean = true
+        private set
 
     /**
      * kType和JDBCType的映射器
      */
     var kTypeAndJDBCTypeMap: Map<KClass<*>, JDBCType> = defaultKTypeAndJDBCTypeMap
+        private set
 
     /**
      * SQL审计1
@@ -70,14 +76,31 @@ object FreshenRuntimeConfig {
      * 就算执行sql时报错，也会执行，方便确定sql拼接是否有误。
      * 缺点是拿不到执行耗时
      */
-    var sqlAudit1: (sql: String,Array<PrepareStatementParam>) -> Unit = {_,_->}
+    var sqlAudit1: (sql: String, Array<PrepareStatementParam>) -> Unit = { _, _ -> }
+        private set
 
     /**
      * SQL审计2
      * 和sqlAudit1区别：执行时机不同，该方法是在执行SQL后执行，
      * 能拿到执行耗时，缺点是当执行sql时报错，不会执行
      */
-    var sqlAudit2: (sql:String,Array<PrepareStatementParam>,elapsedTime: Long) -> Unit = { _, _,_ -> }
+    var sqlAudit2: (sql: String, Array<PrepareStatementParam>, elapsedTime: Long) -> Unit = { _, _, _ -> }
+        private set
+
+    /**
+     * 初始化运行时配置类所有属性
+     */
+    fun initializeConfig(freshenConfig: FreshenConfig) {
+        dataSource = freshenConfig.dataSource
+        keyGenerator = freshenConfig.keyGenerator
+        logicDelete = freshenConfig.logicDelete
+        optimisticLock = freshenConfig.optimisticLock
+        tablePrefix = freshenConfig.tablePrefix
+        enabledUnderscoreToCamelCase = freshenConfig.enabledUnderscoreToCamelCase
+        kTypeAndJDBCTypeMap = freshenConfig.kTypeAndJDBCTypeMap
+        sqlAudit1 = freshenConfig.sqlAudit1
+        sqlAudit2 = freshenConfig.sqlAudit2
+    }
 
     /**
      * 检查运行时配置类中所有属性是否初始化

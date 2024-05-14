@@ -320,8 +320,8 @@ open class QueryBuilder<T : Any> : QueryConditionScope<T>, QueryMethodScope<T>, 
      * @param pageSize 每页行数
      * @param pageNum 页码
      */
-    fun limit(pageSize: Int, pageNum: Int) {
-        val offset = (pageNum - 1) * pageSize
+    fun limit(pageSize: Long, pageNum: Long) {
+        val offset = (pageNum - 1L) * pageSize
         limit = "limit ?, ?"
         limitParams = arrayOf(
             PrepareStatementParam(offset::class, offset),
@@ -334,7 +334,7 @@ open class QueryBuilder<T : Any> : QueryConditionScope<T>, QueryMethodScope<T>, 
      *
      * @param row 行数
      */
-    fun limit(row: Int) {
+    fun limit(row: Long) {
         limit = "limit ?"
         limitParams = arrayOf(PrepareStatementParam(Int::class, row))
     }

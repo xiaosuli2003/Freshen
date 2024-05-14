@@ -2,6 +2,7 @@ package com.xiaosuli.test
 
 import cn.xiaosuli.freshen.core.FreshenRuntimeConfig
 import cn.xiaosuli.freshen.core.builder.QueryConditionScope
+import cn.xiaosuli.freshen.core.crud.paginate
 import cn.xiaosuli.freshen.core.crud.query
 import cn.xiaosuli.freshen.core.entity.FreshenConfig
 import cn.xiaosuli.freshen.core.runFreshen
@@ -13,6 +14,11 @@ import javax.sql.DataSource
 import kotlin.reflect.KProperty1
 
 class QueryTests {
+
+    @Test
+    fun test05() {
+        paginate<Student2>(1, 3).records.forEach { log.info(it.toString()) }
+    }
 
     @Test
     fun test04() {
@@ -27,7 +33,6 @@ class QueryTests {
         statement.setString(3, "3")
         statement.setString(4, "4")
         statement.setInt(5, 5)
-        val executeQuery = statement.executeQuery()
     }
 
     class A<T> : QueryConditionScope<T>
@@ -36,12 +41,11 @@ class QueryTests {
     fun test03() {
         val a = A<Student2>()
         with(a) {
-            val condition = Student2::id.eq("2")
-                .and {
-                    Student2::id.eq("3") or Student2::address.eq("4")
-                }.or {
-                    Student2::id.eq("5") or Student2::id.`in`(6)
-                }
+            val condition = Student2::id.eq("2").and {
+                Student2::id.eq("3") or Student2::address.eq("4")
+            }.or {
+                Student2::id.eq("5") or Student2::id.`in`(6)
+            }
             condition.queryParams.forEach { log.info(it.toString()) }
         }
     }
@@ -121,9 +125,10 @@ class QueryTests {
         @BeforeAll
         fun init() {
             // 启动 Freshen
-            runFreshen {
-                FreshenConfig(
-                    dataSource = getDruidDataSource(),
+            runFreshen(getDruidDataSource())
+            // 启动方式二
+            runFreshen(
+                FreshenConfig(dataSource = getDruidDataSource(),
                     tablePrefix = "tb_",
                     sqlAudit1 = { sql, params ->
                         log.debug("sqlAudit1 ---> sql: $sql")
@@ -136,9 +141,8 @@ class QueryTests {
                         params.forEachIndexed { index, param ->
                             log.debug("sqlAudit2 ---> param ---> index: {}; value: {}", index + 1, param.value)
                         }
-                    }
-                )
-            }
+                    })
+            )
         }
 
         private fun getDruidDataSource(): DataSource = DruidDataSource().apply {
