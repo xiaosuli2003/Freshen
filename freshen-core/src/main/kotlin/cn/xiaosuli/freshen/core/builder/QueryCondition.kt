@@ -124,7 +124,7 @@ abstract class QueryCondition {
      * 用于表示空条件
      */
     data object EmptyCondition : QueryCondition() {
-        override fun toSql(): String = "1 = 1"
+        override fun toSql(): String = ""
         override val queryParams: Array<PrepareStatementParam> = emptyArray()
     }
 

@@ -18,6 +18,7 @@ package cn.xiaosuli.freshen.core.crud
 
 import cn.xiaosuli.freshen.core.FreshenRuntimeConfig
 import cn.xiaosuli.freshen.core.anno.FreshenInternalApi
+import cn.xiaosuli.freshen.core.builder.QueryAsBuilder
 import cn.xiaosuli.freshen.core.builder.QueryBuilder
 import cn.xiaosuli.freshen.core.entity.Page
 import cn.xiaosuli.freshen.core.entity.PrepareStatementParam
@@ -89,9 +90,9 @@ inline fun <reified T : Any> queryOne(
  */
 inline fun <reified T : Any, reified R : Any> queryAs(
     typeMap: Map<KProperty1<*, *>, JDBCType>? = null,
-    noinline init: (QueryBuilder<T>.() -> Unit)? = null
+    noinline init: (QueryAsBuilder<T>.() -> Unit)? = null
 ): List<R> {
-    val (sql, params, start) = buildQuerySQL<T>(init)
+    val (sql, params, start) = buildQueryAsSQL<T>(init)
     return executeQueryAndResultList<R>(sql, params, typeMap, start)
 }
 
@@ -104,9 +105,9 @@ inline fun <reified T : Any, reified R : Any> queryAs(
  */
 inline fun <reified T : Any, reified R : Any> queryFlowAs(
     typeMap: Map<KProperty1<*, *>, JDBCType>? = null,
-    noinline init: (QueryBuilder<T>.() -> Unit)? = null
+    noinline init: (QueryAsBuilder<T>.() -> Unit)? = null
 ): Flow<R> {
-    val (sql, params, start) = buildQuerySQL<T>(init)
+    val (sql, params, start) = buildQueryAsSQL<T>(init)
     return executeQueryAndResultFlow<R>(sql, params, typeMap, start)
 }
 
@@ -212,6 +213,25 @@ inline fun <reified T : Any> buildQuerySQL(
     queryBuilder.from(T::class)
     init?.invoke(queryBuilder)
     val (sql, params) = queryBuilder.build()
+    FreshenRuntimeConfig.sqlAudit1(sql, params)
+    return Triple(sql, params, start)
+}
+
+/**
+ * queryAs系列函数的构建查询语句
+ *
+ * @param init 在这里构建查询语句
+ * @return Triple<String, List<PrepareStatementParam>, Long>
+ */
+@FreshenInternalApi
+inline fun <reified T : Any> buildQueryAsSQL(
+    noinline init: (QueryAsBuilder<T>.() -> Unit)? = null
+): Triple<String, Array<PrepareStatementParam>, Long> {
+    val start = System.currentTimeMillis()
+    val queryAsBuilder = QueryAsBuilder<T>()
+    queryAsBuilder.from(T::class)
+    init?.invoke(queryAsBuilder)
+    val (sql, params) = queryAsBuilder.build()
     FreshenRuntimeConfig.sqlAudit1(sql, params)
     return Triple(sql, params, start)
 }
