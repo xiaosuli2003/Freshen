@@ -26,7 +26,7 @@ import kotlin.reflect.KProperty1
  * 条件构造器
  */
 @FreshenInternalApi
-sealed class QueryCondition {
+abstract class QueryCondition {
     /**
      * 条件lambda转SQL语句
      */

@@ -16,3 +16,29 @@
 
 package cn.xiaosuli.freshen.core.crud
 
+import cn.xiaosuli.freshen.core.builder.UpdateBuilder
+import java.sql.Connection
+
+/**
+ * 修改
+ *
+ * @param entity 要修改的实体
+ * @param ignoreNulls  是否忽略空值
+ * @param connection  数据库连接，默认为空，即不启用事务，如果传入，则使用事务
+ * @return 受影响的行数
+ */
+inline fun <reified T : Any> update(
+    entity: T,
+    ignoreNulls: Boolean = true,
+    connection: Connection? = null,
+    noinline init: (UpdateBuilder<T>.() -> Unit)? = null
+): Int {
+    // 记录方法开始执行的时间
+    val start = System.currentTimeMillis()
+    val updateBuilder = UpdateBuilder<T>()
+    init?.invoke(updateBuilder)
+    updateBuilder.table(T::class)
+    updateBuilder.set(entity, ignoreNulls)
+    val (sql, params) = updateBuilder.build()
+    return executeUpdate(sql, params, start, connection)
+}

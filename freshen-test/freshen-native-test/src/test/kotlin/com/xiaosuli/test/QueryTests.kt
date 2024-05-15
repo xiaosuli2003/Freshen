@@ -2,15 +2,12 @@ package com.xiaosuli.test
 
 import cn.xiaosuli.freshen.core.FreshenRuntimeConfig
 import cn.xiaosuli.freshen.core.anno.FlexIdIsExperimentalApi
-import cn.xiaosuli.freshen.core.anno.Id
 import cn.xiaosuli.freshen.core.anno.SnowflakeIdIsExperimentalApi
 import cn.xiaosuli.freshen.core.builder.QueryConditionScope
-import cn.xiaosuli.freshen.core.crud.insert
-import cn.xiaosuli.freshen.core.crud.insertBatch
-import cn.xiaosuli.freshen.core.crud.paginate
-import cn.xiaosuli.freshen.core.crud.query
+import cn.xiaosuli.freshen.core.crud.*
 import cn.xiaosuli.freshen.core.entity.FreshenConfig
 import cn.xiaosuli.freshen.core.entity.KeyGenerator
+import cn.xiaosuli.freshen.core.entity.LogicDelete
 import cn.xiaosuli.freshen.core.runFreshen
 import com.alibaba.druid.pool.DruidDataSource
 import org.junit.jupiter.api.BeforeAll
@@ -19,10 +16,35 @@ import java.sql.JDBCType
 import java.time.LocalDateTime
 import javax.sql.DataSource
 import kotlin.reflect.KProperty1
-import kotlin.reflect.full.findAnnotation
-import kotlin.reflect.full.memberProperties
 
 class QueryTests {
+
+    @Test
+    fun testUpdate() {
+        val student = Student().apply {
+            gender = "女"
+        }
+        val rows = update<Student>(student){
+            where(Student::name.eq("官人"))
+        }
+        if (rows > 0) {
+            log.info("修改成功!")
+        } else {
+            log.info("修改失败!")
+        }
+    }
+
+    @Test
+    fun testDelete() {
+        val rows = delete<Student>{
+            where(Student::name like "%小苏苏%")
+        }
+        if (rows > 0) {
+            log.info("删除成功!")
+        } else {
+            log.info("删除失败!")
+        }
+    }
 
     @Test
     fun testInsertBatch() {
@@ -173,14 +195,15 @@ class QueryTests {
                 FreshenConfig(dataSource = getDruidDataSource(),
                     tablePrefix = "tb_",
                     keyGenerator = KeyGenerator.NONE,
+                    logicDelete = LogicDelete.Enable("del_flag",0,1),
                     sqlAudit1 = { sql, params ->
                         log.debug("sqlAudit1 ---> sql: $sql")
-                        // params.forEachIndexed { index, param ->
-                        //     log.debug("sqlAudit1 ---> param ---> index: {}; value: {}", index + 1, param.value)
-                        // }
+                        params.forEachIndexed { index, param ->
+                            log.debug("sqlAudit1 ---> param ---> index: {}; value: {}", index + 1, param.value)
+                        }
                     },
                     sqlAudit2 = { sql, params, elapsedTime ->
-                        //log.debug("sqlAudit2 ---> sql: $sql, 耗时: ${elapsedTime}ms")
+                        // log.debug("sqlAudit2 ---> sql: $sql, 耗时: ${elapsedTime}ms")
                         // params.forEachIndexed { index, param ->
                         //     log.debug("sqlAudit2 ---> param ---> index: {}; value: {}", index + 1, param.value)
                         // }

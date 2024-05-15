@@ -129,7 +129,7 @@ sealed class LogicDelete(
      * @param normalValue 正常值
      * @param deletedValue 删除值
      */
-    class Enable(
+    data class Enable(
         override val columnName: String,
         override val normalValue: Any,
         override val deletedValue: Any
@@ -163,12 +163,10 @@ enum class KeyGenerator {
     /**
      * 使用雪花算法生成主键
      */
-    @SnowflakeIdIsExperimentalApi
     SNOWFLAKE_ID,
 
     /**
      * 使用FlexId生成主键
      */
-    @FlexIdIsExperimentalApi
     FLEX_ID
 }

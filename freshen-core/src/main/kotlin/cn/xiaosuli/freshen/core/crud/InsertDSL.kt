@@ -17,10 +17,8 @@
 package cn.xiaosuli.freshen.core.crud
 
 import cn.xiaosuli.freshen.core.FreshenRuntimeConfig
-import cn.xiaosuli.freshen.core.anno.FlexIdIsExperimentalApi
 import cn.xiaosuli.freshen.core.anno.FreshenInternalApi
 import cn.xiaosuli.freshen.core.anno.Id
-import cn.xiaosuli.freshen.core.anno.SnowflakeIdIsExperimentalApi
 import cn.xiaosuli.freshen.core.entity.KeyGenerator
 import cn.xiaosuli.freshen.core.entity.PrepareStatementParam
 import cn.xiaosuli.freshen.core.keygen.FlexIDKeyGenerator
@@ -43,7 +41,6 @@ import kotlin.reflect.full.memberProperties
  * @param connection  数据库连接，默认为空，即不启用事务，如果传入，则使用事务
  * @return 受影响的行数
  */
-@OptIn(SnowflakeIdIsExperimentalApi::class, FlexIdIsExperimentalApi::class)
 inline fun <reified T : Any> insert(
     entity: T,
     connection: Connection? = null,

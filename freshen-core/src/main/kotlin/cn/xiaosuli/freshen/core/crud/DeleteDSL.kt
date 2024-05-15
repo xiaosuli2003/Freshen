@@ -16,3 +16,26 @@
 
 package cn.xiaosuli.freshen.core.crud
 
+import cn.xiaosuli.freshen.core.FreshenRuntimeConfig
+import cn.xiaosuli.freshen.core.builder.DeleteBuilder
+import java.sql.Connection
+
+/**
+ * 删除
+ *
+ * @param connection  数据库连接，默认为空，即不启用事务，如果传入，则使用事务
+ * @return 受影响的行数
+ */
+inline fun <reified T : Any> delete(
+    connection: Connection? = null,
+    noinline init: (DeleteBuilder<T>.() -> Unit)? = null
+): Int {
+    // 记录方法开始执行的时间
+    val start = System.currentTimeMillis()
+    val deleteBuilder = DeleteBuilder<T>()
+    init?.invoke(deleteBuilder)
+    deleteBuilder.table(T::class)
+    val (sql, params) = deleteBuilder.build()
+    FreshenRuntimeConfig.sqlAudit1(sql, params)
+    return executeUpdate(sql, params, start, connection)
+}
