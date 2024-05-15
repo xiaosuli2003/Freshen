@@ -21,10 +21,10 @@ import java.util.*
  * UUID生成器
  *
  * 修改人：是晓酥梨呀（2060988267@qq.com）
- * 修改说明：将原文件翻译为Kotlin。
+ * 修改说明：将原文件翻译为Kotlin，删除了generate方法的参数
  */
 class UUIDKeyGenerator : IKeyGenerator {
-    override fun generate(entity: Any, keyColumn: String): String {
+    override fun generate(): String {
         return UUID.randomUUID().toString().replace("-", "")
     }
 }

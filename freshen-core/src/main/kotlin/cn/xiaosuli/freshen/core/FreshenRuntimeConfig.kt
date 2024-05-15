@@ -103,6 +103,13 @@ object FreshenRuntimeConfig {
     }
 
     /**
+     * 初始化datasource
+     */
+    fun initializeConfig(dataSource: DataSource) {
+        this.dataSource = dataSource
+    }
+
+    /**
      * 检查运行时配置类中所有属性是否初始化
      *
      * @throws IllegalStateException 如果未初始化，抛出异常

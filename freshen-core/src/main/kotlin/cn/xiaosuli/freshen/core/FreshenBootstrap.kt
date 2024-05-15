@@ -37,9 +37,8 @@ fun runFreshen(freshenConfig: FreshenConfig) {
  * @param dataSource 数据源
  */
 fun runFreshen(dataSource: DataSource) {
-    val freshenConfig = FreshenConfig(dataSource)
-    // 将获取的配置信息赋值给【运行时配置类】对应的属性
-    FreshenRuntimeConfig.initializeConfig(freshenConfig)
+    // 将获取的datasource赋值给【运行时配置类】的datasource
+    FreshenRuntimeConfig.initializeConfig(dataSource)
     // 全部初始化完了，再检查一下dataSource否已初始化
     FreshenRuntimeConfig.checkDataSourceIsInitialized()
 }

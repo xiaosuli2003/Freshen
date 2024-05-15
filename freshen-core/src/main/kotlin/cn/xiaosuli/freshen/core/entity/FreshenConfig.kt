@@ -16,6 +16,9 @@
 
 package cn.xiaosuli.freshen.core.entity
 
+import cn.xiaosuli.freshen.core.anno.FlexIdIsExperimentalApi
+import cn.xiaosuli.freshen.core.anno.FreshenExperimentalApi
+import cn.xiaosuli.freshen.core.anno.SnowflakeIdIsExperimentalApi
 import java.math.BigDecimal
 import java.math.BigInteger
 import java.sql.JDBCType
@@ -134,55 +137,38 @@ sealed class LogicDelete(
 }
 
 /**
- * 配置主键生成策略
- *
- * @property keyGenerator 指定主键生成器
- */
-/*sealed class KeyStrategy(
-    open val keyGenerator: KeyGenerator
-) {
-    *//**
-     * 手动设置id
-     *//*
-    data object None : KeyStrategy(KeyGenerator.NONE)
-
-    *//**
-     * 数据库自增
-     *//*
-    data object Anto : KeyStrategy(KeyGenerator.NONE)
-
-    *//**
-     * 通过 KeyGenerator 生成器生成。
-     *
-     * @param keyGenerator 主键生成器
-     *//*
-    class Generator(
-        override val keyGenerator: KeyGenerator
-    ) : KeyStrategy(keyGenerator)
-}*/
-
-/**
  * 主键生成器
- *
- * @property value 值
+ * * 由于SnowflakeId和FlexId在批量插入时100%复现id重复
+ * * 对于单个插入，我没试过，但理论上不会重复
+ * * 批量插入id重复，是因为id是foreach遍历时生成的，时间间隔太短，所以id会重复
+ * * 所以只能用UUID，但是UUID生成的是字符串，不是整型
+ * * 所以约等于Freshen，不支持自动生成主键
  */
-enum class KeyGenerator(
-    private val value: String
-) {
+enum class KeyGenerator {
     /**
-     * 默认行为，不使用生成器
-     * 设置此值是为了避免写出[KeyGenerator?]这样的类型
-     * 本库不会用到这个value值
+     * 默认行为，什么也不做，需要你显式地设置主键的值
      */
-    NONE("none"),
+    NONE,
+
+    /**
+     * 设置数据库自增
+     */
+    AUTO,
 
     /**
      * 使用UUID生成主键
      */
-    UUID("uuid"),
+    UUID,
 
     /**
      * 使用雪花算法生成主键
      */
-    SNOWFLAKE_ID("snowFlakeId")
+    @SnowflakeIdIsExperimentalApi
+    SNOWFLAKE_ID,
+
+    /**
+     * 使用FlexId生成主键
+     */
+    @FlexIdIsExperimentalApi
+    FLEX_ID
 }

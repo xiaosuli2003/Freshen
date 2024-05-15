@@ -173,10 +173,10 @@ fun PreparedStatement.setParams(params: Array<PrepareStatementParam>?) {
 @FreshenInternalApi
 fun Connection.closeAndAudit(
     statement: PreparedStatement,
-    resultSet: ResultSet,
+    resultSet: ResultSet? = null,
     sql: String,
     params: Array<PrepareStatementParam>,
-    start: Long
+    start: Long,
 ) {
     this.close(statement, resultSet)
     val end = System.currentTimeMillis()

@@ -36,13 +36,13 @@ import java.util.concurrent.ThreadLocalRandom
  * @param workId 机器ID
  *
  * 修改人：是晓酥梨呀（2060988267@qq.com）
- * 修改说明：将原文件翻译为Kotlin，修改了此注释。
+ * 修改说明：将原文件翻译为Kotlin，修改了此注释，删除了generate方法的参数
  */
 class FlexIDKeyGenerator(private val workId: Long = 1) : IKeyGenerator {
     private var lastTimeMillis: Long = 0 // 最后一次生成 ID 的时间
     private var clockSeq: Long = 0 // 时间序列
 
-    override fun generate(entity: Any, keyColumn: String): Long {
+    override fun generate(): Long {
         return nextId()
     }
 

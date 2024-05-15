@@ -1,22 +1,63 @@
 package com.xiaosuli.test
 
 import cn.xiaosuli.freshen.core.FreshenRuntimeConfig
+import cn.xiaosuli.freshen.core.anno.FlexIdIsExperimentalApi
+import cn.xiaosuli.freshen.core.anno.Id
+import cn.xiaosuli.freshen.core.anno.SnowflakeIdIsExperimentalApi
 import cn.xiaosuli.freshen.core.builder.QueryConditionScope
+import cn.xiaosuli.freshen.core.crud.insert
+import cn.xiaosuli.freshen.core.crud.insertBatch
 import cn.xiaosuli.freshen.core.crud.paginate
 import cn.xiaosuli.freshen.core.crud.query
 import cn.xiaosuli.freshen.core.entity.FreshenConfig
+import cn.xiaosuli.freshen.core.entity.KeyGenerator
 import cn.xiaosuli.freshen.core.runFreshen
 import com.alibaba.druid.pool.DruidDataSource
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import java.sql.JDBCType
+import java.time.LocalDateTime
 import javax.sql.DataSource
 import kotlin.reflect.KProperty1
+import kotlin.reflect.full.findAnnotation
+import kotlin.reflect.full.memberProperties
 
 class QueryTests {
 
     @Test
-    fun test05() {
+    fun testInsertBatch() {
+        val list: MutableList<Student> = mutableListOf()
+        repeat(100) {
+            list.add(
+                Student().apply {
+                    name = "小苏苏$it"
+                    gender = "男"
+                    birthday = LocalDateTime.now()
+                    phoneNumber = "13${it}4935${it}"
+                    address = "陕西西安${it}"
+                }
+            )
+        }
+        val rows = insertBatch(list)
+        log.info("影响行数：$rows")
+    }
+
+    @Test
+    fun testInsert() {
+        val stu = Student().apply {
+            id = 1234564565435643
+            name = "小苏苏"
+            gender = "男"
+            birthday = LocalDateTime.now()
+            phoneNumber = "13134567"
+            address = "陕西西安}"
+        }
+        val rows = insert(stu)
+        log.info("影响行数：$rows")
+    }
+
+    @Test
+    fun testPage() {
         paginate<Student2>(1, 3).records.forEach { log.info(it.toString()) }
     }
 
@@ -121,6 +162,7 @@ class QueryTests {
     }
 
     companion object {
+        @OptIn(SnowflakeIdIsExperimentalApi::class, FlexIdIsExperimentalApi::class)
         @JvmStatic
         @BeforeAll
         fun init() {
@@ -130,17 +172,18 @@ class QueryTests {
             runFreshen(
                 FreshenConfig(dataSource = getDruidDataSource(),
                     tablePrefix = "tb_",
+                    keyGenerator = KeyGenerator.NONE,
                     sqlAudit1 = { sql, params ->
                         log.debug("sqlAudit1 ---> sql: $sql")
-                        params.forEachIndexed { index, param ->
-                            log.debug("sqlAudit1 ---> param ---> index: {}; value: {}", index + 1, param.value)
-                        }
+                        // params.forEachIndexed { index, param ->
+                        //     log.debug("sqlAudit1 ---> param ---> index: {}; value: {}", index + 1, param.value)
+                        // }
                     },
                     sqlAudit2 = { sql, params, elapsedTime ->
-                        log.debug("sqlAudit2 ---> sql: $sql, 耗时: ${elapsedTime}ms")
-                        params.forEachIndexed { index, param ->
-                            log.debug("sqlAudit2 ---> param ---> index: {}; value: {}", index + 1, param.value)
-                        }
+                        //log.debug("sqlAudit2 ---> sql: $sql, 耗时: ${elapsedTime}ms")
+                        // params.forEachIndexed { index, param ->
+                        //     log.debug("sqlAudit2 ---> param ---> index: {}; value: {}", index + 1, param.value)
+                        // }
                     })
             )
         }

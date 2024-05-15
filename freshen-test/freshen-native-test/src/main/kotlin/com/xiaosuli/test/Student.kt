@@ -2,10 +2,13 @@ package com.xiaosuli.test
 
 import cn.xiaosuli.freshen.core.anno.Column
 import cn.xiaosuli.freshen.core.anno.Id
+import cn.xiaosuli.freshen.core.anno.SnowflakeIdIsExperimentalApi
 import cn.xiaosuli.freshen.core.anno.Table
+import cn.xiaosuli.freshen.core.entity.KeyGenerator
 import java.time.LocalDateTime
 
 class Student {
+    // @Id("id", keyGenerator = KeyGenerator.UUID)
     var id: Long? = null
     var name: String? = null
     var gender: String? = null
@@ -18,11 +21,12 @@ class Student {
 }
 
 @Table("tb_student")
-data class Student2 (
+data class Student2(
     @Id("id22")
     val id: Long,
     @Column("name33")
     val name: String,
+    @Column
     val gender: String,
     val birthday: LocalDateTime,
     val phoneNumber: String,

@@ -55,5 +55,5 @@ data class SQLWithParams(
  */
 data class PrepareStatementParam(
     val type: KClass<*>,
-    val value: Any
+    val value: Any?
 )

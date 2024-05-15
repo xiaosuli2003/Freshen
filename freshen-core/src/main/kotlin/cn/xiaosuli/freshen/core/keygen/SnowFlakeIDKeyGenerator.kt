@@ -34,7 +34,12 @@ import java.net.NetworkInterface
  * @since 2023-05-12
  *
  * 修改人：是晓酥梨呀（2060988267@qq.com）
- * 二次修改说明：将原文件翻译为Kotlin，修改了此注释、修改了抛出的异常、修改了name的判空（在第111行）。
+ * 二次修改说明：
+ * * 将原文件翻译为Kotlin
+ * * 修改了此注释
+ * * 修改了抛出的异常
+ * * 修改了name的判空（在第111行）
+ * * 删除了generate方法的参数
  */
 open class SnowFlakeIDKeyGenerator : IKeyGenerator {
     /**
@@ -141,7 +146,7 @@ open class SnowFlakeIDKeyGenerator : IKeyGenerator {
         return id
     }
 
-    override fun generate(entity: Any, keyColumn: String): Any {
+    override fun generate(): Any {
         return nextId()
     }
 
@@ -149,7 +154,7 @@ open class SnowFlakeIDKeyGenerator : IKeyGenerator {
      * 获取下一个 ID。
      */
     @Synchronized
-    fun nextId(): Long {
+    private fun nextId(): Long {
         var currentTimeMillis = System.currentTimeMillis()
         // 当前时间小于上一次生成 ID 使用的时间，可能出现服务器时钟回拨问题。
         if (currentTimeMillis < lastTimeMillis) {

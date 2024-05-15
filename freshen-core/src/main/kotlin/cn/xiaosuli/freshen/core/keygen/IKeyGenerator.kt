@@ -19,8 +19,8 @@ package cn.xiaosuli.freshen.core.keygen
  * 主键生成器接口
  *
  * 修改人：是晓酥梨呀（2060988267@qq.com）
- * 修改说明：将原文件翻译为Kotlin。
+ * 修改说明：将原文件翻译为Kotlin，删除了generate方法的参数
  */
 interface IKeyGenerator {
-    fun generate(entity: Any, keyColumn: String): Any
+    fun generate(): Any
 }
