@@ -1,21 +1,15 @@
 package com.xiaosuli.test
 
-import cn.xiaosuli.freshen.core.crud.paginate
 import cn.xiaosuli.freshen.core.crud.query
 import cn.xiaosuli.freshen.core.crud.queryAs
-import cn.xiaosuli.freshen.core.crud.queryOne
-import cn.xiaosuli.freshen.core.entity.Page
 import cn.xiaosuli.freshen.core.runFreshen
 import com.alibaba.druid.pool.DruidDataSource
 import javax.sql.DataSource
 
 fun main() {
     runFreshen(getDruidDataSource())
-    queryAs<Student,Student>{
-        where{
-            Student::name like "%xiaosuli"
-        }
-    }
+    val studentList = query<Student>()
+    studentList.forEach(::println)
 }
 
 private fun getDruidDataSource(): DataSource = DruidDataSource().apply {

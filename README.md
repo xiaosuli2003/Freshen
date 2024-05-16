@@ -44,7 +44,7 @@
 <p>
 
 #### Q: 为什么起这个名字呢？
-<p>A: 开始写这个项目的时候，一些配置类就要定和项目名相关的名字，例如`XXXConfig`，因为我比较喜欢清新自然这些词汇，就用翻译软件查相关的单词，就找到了这个单词，一看中文意思还不错，读起来也不难，所以就起名Freshen了。
+<p><b>A: </b>开始写这个项目的时候，一些配置类就要定和项目名相关的名字，例如`XXXConfig`，因为我比较喜欢清新自然这些词汇，就用翻译软件查相关的单词，就找到了这个单词，一看中文意思还不错，读起来也不难，所以就起名Freshen了。
 
 ### 致谢:
 
@@ -102,19 +102,25 @@ create table student
 );
 ```
 
-**第 2 步：创建 Kotlin 项目，并添加 Maven / Gradle 依赖**（让我先学习一下怎么把代码发布到Maven中央仓库）
+**第 2 步：创建 Kotlin 项目，并添加 Maven / Gradle 依赖**
+
 - Gradle(Kotlin)依赖如下：
 ```kotlin
-
+implementation("cn.xiaosuli:freshen-core:0.1.0-alpha")
 ```
 - Gradle(Groovy)依赖如下：
 ```groovy
-
+implementation 'cn.xiaosuli:freshen-core:0.1.0-alpha'
 ```
 - Maven依赖如下：
 ```xml
-
+<dependency>
+    <groupId>cn.xiaosuli</groupId>
+    <artifactId>freshen-core</artifactId>
+    <version>0.1.0-alpha</version>
+</dependency>
 ```
+
 **第 3 步：Freshen 启动！**
 - 这里使用Druid连接池，如果你不想使用Druid，可以替换成其他连接池，只要该数据源可以返回JDBC标准的`javax.sql.DataSource`即可。
 ```kotlin
@@ -130,24 +136,21 @@ private fun getDruidDataSource(): DataSource = DruidDataSource().apply {
     driverClassName = "com.mysql.cj.jdbc.Driver"
     url = "jdbc:mysql://localhost:3306/db_freshen?serverTimezone=Asia/Shanghai"
     username = "root"
-    password = "123456"
+    password = "******"
 }
 ```
 
 **第 4 步：编写 Entity 实体类**
-- 其实Freshen是支持data class的，但是后面在执行修改操作时，因为主构造器必须传所有值，所以这里我使用普通类。
+
 ```kotlin
-class Student {
-    var id: Long? = null
-    var name: String? = null
-    var gender: String? = null
-    var birthday: LocalDateTime? = null
-    var phoneNumber: String? = null
-    var address: String? = null
-    override fun toString(): String {
-        return "Student(id=$id, name=$name, gender=$gender, birthday=$birthday, phoneNumber=$phoneNumber, address=$address)"
-    }
-}
+data class Student(
+    val id: Long,
+    val name: String,
+    val gender: String,
+    val birthday: LocalDateTime,
+    val phoneNumber: String,
+    val address: String? = null
+)
 ```
 
 **第 5 步：开始查询数据**

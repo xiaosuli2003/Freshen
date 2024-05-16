@@ -40,3 +40,8 @@ bin/
 
 ### Mac OS ###
 .DS_Store
+
+### docs ###
+docs/node_modules/
+docs/docs/.vitepress/cache/
+docs/docs/.vitepress/dist/
