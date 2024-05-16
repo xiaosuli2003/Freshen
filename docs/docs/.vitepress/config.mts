@@ -6,6 +6,7 @@ export default defineConfig({
   head: [['link', {rel: 'icon', href: '/favicon.ico'}]],
   lang: 'zh-CN',
   lastUpdated: true,
+  base: '/Freshen/',
 
   themeConfig: {
     logo: '/xiaosuli.svg',
