@@ -9,7 +9,7 @@
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * WI*HOU* WARRAN*IES OR CONDI*IONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
@@ -21,7 +21,7 @@ import kotlin.reflect.KProperty1
 /**
  * where和having的条件符
  */
-interface QueryConditionScope<T> {
+interface QueryConditionScope {
 
     /**
      * 等于(=)
@@ -29,7 +29,7 @@ interface QueryConditionScope<T> {
      * @param value 模糊匹配的值
      * @return QueryCondition
      */
-    infix fun <V : Any?> KProperty1<T, V>.eq(value: V): QueryCondition =
+    infix fun <V> KProperty1<*,V>.eq(value: V): QueryCondition =
         QueryCondition.BaseCondition(this, "=", value as Any)
 
     /**
@@ -38,7 +38,7 @@ interface QueryConditionScope<T> {
      * @param value 模糊匹配的值
      * @return QueryCondition
      */
-    infix fun <V : Any?> KProperty1<T, V>.ne(value: V): QueryCondition =
+    infix fun <V> KProperty1<*, V>.ne(value: V): QueryCondition =
         QueryCondition.BaseCondition(this, "!=", value as Any)
 
     /**
@@ -47,7 +47,7 @@ interface QueryConditionScope<T> {
      * @param value 模糊匹配的值
      * @return QueryCondition
      */
-    infix fun <V : Any?> KProperty1<T, V>.gt(value: V): QueryCondition =
+    infix fun <V> KProperty1<*, V>.gt(value: V): QueryCondition =
         QueryCondition.BaseCondition(this, ">", value as Any)
 
     /**
@@ -56,7 +56,7 @@ interface QueryConditionScope<T> {
      * @param value 模糊匹配的值
      * @return QueryCondition
      */
-    infix fun <V : Any?> KProperty1<T, V>.lt(value: V): QueryCondition =
+    infix fun <V> KProperty1<*, V>.lt(value: V): QueryCondition =
         QueryCondition.BaseCondition(this, "<", value as Any)
 
     /**
@@ -65,7 +65,7 @@ interface QueryConditionScope<T> {
      * @param value 模糊匹配的值
      * @return QueryCondition
      */
-    infix fun <V : Any?> KProperty1<T, V>.le(value: V): QueryCondition =
+    infix fun <V> KProperty1<*, V>.le(value: V): QueryCondition =
         QueryCondition.BaseCondition(this, "<=", value as Any)
 
     /**
@@ -74,7 +74,7 @@ interface QueryConditionScope<T> {
      * @param value 模糊匹配的值
      * @return QueryCondition
      */
-    infix fun <V : Any?> KProperty1<T, V>.ge(value: V): QueryCondition =
+    infix fun <V> KProperty1<*, V>.ge(value: V): QueryCondition =
         QueryCondition.BaseCondition(this, ">=", value as Any)
 
     /**
@@ -83,7 +83,7 @@ interface QueryConditionScope<T> {
      * @param values 区间
      * @return QueryCondition
      */
-    fun <V : Any> KProperty1<T, V>.`in`(vararg values: V): QueryCondition =
+    fun <V : Any> KProperty1<*, V>.`in`(vararg values: V): QueryCondition =
         QueryCondition.InCondition(this, "in", values.toList())
 
     /**
@@ -92,7 +92,7 @@ interface QueryConditionScope<T> {
      * @param values 区间
      * @return QueryCondition
      */
-    fun <V : Any> KProperty1<T, V>.notIn(vararg values: V): QueryCondition =
+    fun <V : Any> KProperty1<*, V>.notIn(vararg values: V): QueryCondition =
         QueryCondition.InCondition(this, "not in", values.toList())
 
     /**
@@ -101,7 +101,7 @@ interface QueryConditionScope<T> {
      * @param range 区间
      * @return QueryCondition
      */
-    infix fun <V : Comparable<V>> KProperty1<T, V>.`in`(range: ClosedRange<V>): QueryCondition =
+    infix fun <V : Comparable<V>> KProperty1<*, V>.`in`(range: ClosedRange<V>): QueryCondition =
         QueryCondition.BetweenCondition(this, "between", range)
 
     /**
@@ -110,27 +110,27 @@ interface QueryConditionScope<T> {
      * @param range 区间
      * @return QueryCondition
      */
-    infix fun <V : Comparable<V>> KProperty1<T, V>.notIn(range: ClosedRange<V>): QueryCondition =
-        QueryCondition.BaseCondition(this, "not between", range)
+    infix fun <V : Comparable<V>> KProperty1<*, V>.notIn(range: ClosedRange<V>): QueryCondition =
+        QueryCondition.BetweenCondition(this, "not between", range)
 
     /**
      * like模糊匹配，需要手拼%
-     * * 示例：`"%${someThing}%"`
+     * * 示例：`"%${some*hing}%"`
      *
      * @param value 模糊匹配的值
      * @return QueryCondition
      */
-    infix fun KProperty1<T, *>.like(value: String): QueryCondition =
+    infix fun KProperty1<*, *>.like(value: String): QueryCondition =
         QueryCondition.BaseCondition(this, "like", value)
 
     /**
      * not like模糊匹配，需要手拼%
-     * * 示例：`"%${someThing}%"`
+     * * 示例：`"%${some*hing}%"`
      *
      * @param value 模糊匹配的值
      * @return QueryCondition
      */
-    infix fun KProperty1<T, *>.notLike(value: String): QueryCondition =
+    infix fun KProperty1<*, *>.notLike(value: String): QueryCondition =
         QueryCondition.BaseCondition(this, "not like", value)
 
     /**
@@ -138,7 +138,7 @@ interface QueryConditionScope<T> {
      *
      * @return QueryCondition
      */
-    fun KProperty1<T, *>.isNull(): QueryCondition =
+    fun KProperty1<*, *>.isNull(): QueryCondition =
         QueryCondition.NullCondition(this, "is null")
 
     /**
@@ -146,6 +146,6 @@ interface QueryConditionScope<T> {
      *
      * @return QueryCondition
      */
-    fun KProperty1<T, *>.isNotNull(): QueryCondition =
+    fun KProperty1<*, *>.isNotNull(): QueryCondition =
         QueryCondition.NullCondition(this, "is not null")
 }

@@ -17,7 +17,7 @@
 package cn.xiaosuli.freshen.core.builder
 
 import cn.xiaosuli.freshen.core.anno.FreshenInternalApi
-import cn.xiaosuli.freshen.core.utils.column
+import cn.xiaosuli.freshen.core.column
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty1
 import kotlin.reflect.full.memberProperties

@@ -37,8 +37,7 @@ inline fun <reified T : Any> update(
     val start = System.currentTimeMillis()
     val updateBuilder = UpdateBuilder<T>()
     init?.invoke(updateBuilder)
-    updateBuilder.table(T::class)
     updateBuilder.set(entity, ignoreNulls)
-    val (sql, params) = updateBuilder.build()
+    val (sql, params) = updateBuilder.build(T::class)
     return executeUpdate(sql, params, start, connection)
 }

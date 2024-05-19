@@ -1044,7 +1044,7 @@ sys|schema||mysql.sys|localhost|TRIGGER|G</Grants>
     </schema>
     <schema id="304" parent="1" name="db_freshen">
       <Current>1</Current>
-      <LastIntrospectionLocalTimestamp>2024-05-15.14:29:34</LastIntrospectionLocalTimestamp>
+      <LastIntrospectionLocalTimestamp>2024-05-18.13:23:00</LastIntrospectionLocalTimestamp>
       <CollationName>utf8mb4_unicode_520_ci</CollationName>
     </schema>
     <user id="305" parent="1" name="mysql.infoschema">
@@ -1066,7 +1066,7 @@ sys|schema||mysql.sys|localhost|TRIGGER|G</Grants>
       <Host>localhost</Host>
       <Plugin>caching_sha2_password</Plugin>
     </user>
-    <table id="309" parent="304" name="tb_student">
+    <table id="309" parent="304" name="student">
       <Engine>InnoDB</Engine>
       <CollationName>utf8mb4_unicode_520_ci</CollationName>
     </table>

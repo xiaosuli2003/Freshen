@@ -17,10 +17,8 @@
 package cn.xiaosuli.freshen.core.builder
 
 import cn.xiaosuli.freshen.core.anno.FreshenInternalApi
-import cn.xiaosuli.freshen.core.entity.PrepareStatementParam
-import cn.xiaosuli.freshen.core.entity.SQLWithParams
-import cn.xiaosuli.freshen.core.utils.column
-import cn.xiaosuli.freshen.core.utils.table
+import cn.xiaosuli.freshen.core.column
+import cn.xiaosuli.freshen.core.table
 import kotlin.reflect.KClass
 import kotlin.reflect.full.memberProperties
 
@@ -31,12 +29,7 @@ import kotlin.reflect.full.memberProperties
  * @param T 表对应的实体类
  */
 @FreshenInternalApi
-open class UpdateBuilder<T : Any> : QueryConditionScope<T>, QueryMethodScope<T>, SQLBuilder {
-    /**
-     * table表名
-     */
-    private var table = ""
-
+open class UpdateBuilder<T : Any> : QueryConditionScope, QueryMethodScope, SQLBuilder<T> {
     /**
      * set XXX = ?, XXX = ?
      */
@@ -45,7 +38,7 @@ open class UpdateBuilder<T : Any> : QueryConditionScope<T>, QueryMethodScope<T>,
     /**
      * set占位参数列表
      */
-    private var setParams: Array<PrepareStatementParam> = emptyArray()
+    private var setParams: Array<Any?> = emptyArray()
 
     /**
      * where condition
@@ -56,16 +49,7 @@ open class UpdateBuilder<T : Any> : QueryConditionScope<T>, QueryMethodScope<T>,
     /**
      * where占位参数列表
      */
-    private var whereParams: Array<PrepareStatementParam> = emptyArray()
-
-    /**
-     * 设置要查询的表
-     *
-     * @param kClass 表对应的实体类引用
-     */
-    fun table(kClass: KClass<T>) {
-        table = kClass.table
-    }
+    private var whereParams: Array<Any?> = emptyArray()
 
     // set ==================================================
 
@@ -76,18 +60,18 @@ open class UpdateBuilder<T : Any> : QueryConditionScope<T>, QueryMethodScope<T>,
      * @param ignoreNulls  是否忽略空值
      */
     fun set(entity: T, ignoreNulls: Boolean) {
-        val setParamsList = mutableListOf<PrepareStatementParam>()
+        val setParamsList = mutableListOf<Any?>()
         val setStr = StringBuilder()
         entity::class.memberProperties.forEach {
             val type = it.returnType.classifier as KClass<*>
             if (ignoreNulls) {
                 if (it.getter.call(entity) != null) {
                     setStr.append("${it.column} = ?,")
-                    setParamsList.add(PrepareStatementParam(type, it.getter.call(entity)))
+                    setParamsList.add(it.getter.call(entity))
                 }
             } else {
                 setStr.append("${it.column} = ?,")
-                setParamsList.add(PrepareStatementParam(type, it.getter.call(entity)))
+                setParamsList.add(it.getter.call(entity))
             }
         }
         set = "set " + setStr.toString().dropLast(1)
@@ -121,21 +105,22 @@ open class UpdateBuilder<T : Any> : QueryConditionScope<T>, QueryMethodScope<T>,
     // sql build ==================================================
 
     /**
-     * 拼接SQL
+     * 构建SQL，并返回SQL何占位参数
      *
-     * @return SQL
+     * @param table 表对应的实体类
+     * @return SQL和占位参数
      */
-    override fun build(): SQLWithParams {
+    override fun build(table: KClass<T>): Pair<String, Array<Any?>> {
         val sql = buildString {
             append("update")
             append(" ")
-            append(table)
+            append(table.table)
             append(" ")
             append(set)
             append(" ")
             append(where)
         }
         val params = arrayOf(*setParams, *whereParams)
-        return SQLWithParams(sql, params)
+        return Pair(sql, params)
     }
 }

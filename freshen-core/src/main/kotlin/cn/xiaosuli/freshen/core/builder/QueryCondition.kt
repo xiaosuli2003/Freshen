@@ -17,9 +17,7 @@
 package cn.xiaosuli.freshen.core.builder
 
 import cn.xiaosuli.freshen.core.anno.FreshenInternalApi
-import cn.xiaosuli.freshen.core.entity.PrepareStatementParam
-import cn.xiaosuli.freshen.core.utils.column
-import kotlin.reflect.KClass
+import cn.xiaosuli.freshen.core.column
 import kotlin.reflect.KProperty1
 
 /**
@@ -35,7 +33,7 @@ abstract class QueryCondition {
     /**
      * 占位参数列表
      */
-    abstract val queryParams: Array<PrepareStatementParam>
+    abstract val queryParams: Array<Any?>
 
     /**
      * 用于表示逻辑操作
@@ -84,7 +82,7 @@ abstract class QueryCondition {
             /**
              * 占位参数列表
              */
-            override val queryParams: Array<PrepareStatementParam> =
+            override val queryParams: Array<Any?> =
                 arrayOf(*current.queryParams, *next.queryParams)
         }
 
@@ -115,7 +113,7 @@ abstract class QueryCondition {
             /**
              * 占位参数列表
              */
-            override val queryParams: Array<PrepareStatementParam> =
+            override val queryParams: Array<Any?> =
                 arrayOf(*current.queryParams, *next.queryParams)
         }
     }
@@ -125,7 +123,7 @@ abstract class QueryCondition {
      */
     data object EmptyCondition : QueryCondition() {
         override fun toSql(): String = ""
-        override val queryParams: Array<PrepareStatementParam> = emptyArray()
+        override val queryParams: Array<Any?> = emptyArray()
     }
 
     /**
@@ -145,7 +143,7 @@ abstract class QueryCondition {
          */
         class Exists(override val subquery: String) : ExistsCondition() {
             override fun toSql(): String = "exists ($subquery)"
-            override val queryParams: Array<PrepareStatementParam> = emptyArray()
+            override val queryParams: Array<Any?> = emptyArray()
         }
 
         /**
@@ -156,7 +154,7 @@ abstract class QueryCondition {
          */
         class NotExists(override val subquery: String) : ExistsCondition() {
             override fun toSql(): String = "not exists ($subquery)"
-            override val queryParams: Array<PrepareStatementParam> = emptyArray()
+            override val queryParams: Array<Any?> = emptyArray()
         }
     }
 
@@ -165,7 +163,7 @@ abstract class QueryCondition {
      */
     data class NotCondition(val notCondition: QueryCondition) : QueryCondition() {
         override fun toSql(): String = "not (${notCondition.toSql()})"
-        override val queryParams: Array<PrepareStatementParam> = notCondition.queryParams
+        override val queryParams: Array<Any?> = notCondition.queryParams
     }
 
     /**
@@ -185,8 +183,7 @@ abstract class QueryCondition {
         /**
          * 占位参数列表
          */
-        override val queryParams: Array<PrepareStatementParam> =
-            arrayOf(PrepareStatementParam(property.returnType.classifier as KClass<*>, value))
+        override val queryParams: Array<Any?> = arrayOf(value)
     }
 
     /**
@@ -204,7 +201,7 @@ abstract class QueryCondition {
         /**
          * 占位参数列表
          */
-        override val queryParams: Array<PrepareStatementParam> = emptyArray()
+        override val queryParams: Array<Any?> = emptyArray()
     }
 
     /**
@@ -225,10 +222,7 @@ abstract class QueryCondition {
         /**
          * 占位参数列表
          */
-        override val queryParams: Array<PrepareStatementParam> = arrayOf(
-            PrepareStatementParam(property.returnType.classifier as KClass<*>, range.start),
-            PrepareStatementParam(property.returnType.classifier as KClass<*>, range.endInclusive)
-        )
+        override val queryParams: Array<Any?> = arrayOf(range.start, range.endInclusive)
     }
 
     /**
@@ -237,10 +231,10 @@ abstract class QueryCondition {
      * @param property 属性
      * @param operator 操作符
      */
-    data class InCondition<T>(
-        val property: KProperty1<T, *>,
-        val operator: String,
-        val values: List<Any>
+    class InCondition<T>(
+        private val property: KProperty1<T, *>,
+        private val operator: String,
+        private val values: List<Any>,
     ) : QueryCondition() {
         override fun toSql(): String {
             val list = values.joinToString(",") { "?" }
@@ -250,9 +244,7 @@ abstract class QueryCondition {
         /**
          * 占位参数列表
          */
-        override val queryParams: Array<PrepareStatementParam> = values.map {
-            PrepareStatementParam(property.returnType.classifier as KClass<*>, it)
-        }.toTypedArray()
+        override val queryParams: Array<Any?> = values.toTypedArray()
     }
 
     /**

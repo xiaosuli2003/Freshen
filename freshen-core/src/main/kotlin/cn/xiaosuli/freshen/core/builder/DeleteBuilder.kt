@@ -18,14 +18,9 @@ package cn.xiaosuli.freshen.core.builder
 
 import cn.xiaosuli.freshen.core.FreshenRuntimeConfig
 import cn.xiaosuli.freshen.core.anno.FreshenInternalApi
-import cn.xiaosuli.freshen.core.anno.Table
 import cn.xiaosuli.freshen.core.entity.LogicDelete
-import cn.xiaosuli.freshen.core.entity.PrepareStatementParam
-import cn.xiaosuli.freshen.core.entity.SQLWithParams
-import cn.xiaosuli.freshen.core.utils.table
-import cn.xiaosuli.freshen.core.utils.toUnderscore
+import cn.xiaosuli.freshen.core.table
 import kotlin.reflect.KClass
-import kotlin.reflect.full.findAnnotation
 
 /**
  * 查询语句构造器（适用于单表查询）
@@ -34,11 +29,7 @@ import kotlin.reflect.full.findAnnotation
  * @param T 表对应的实体类
  */
 @FreshenInternalApi
-open class DeleteBuilder<T : Any> : QueryConditionScope<T>, QueryMethodScope<T>, SQLBuilder {
-    /**
-     * table表名
-     */
-    private var table = ""
+open class DeleteBuilder<T : Any> : QueryConditionScope, QueryMethodScope, SQLBuilder<T> {
 
     /**
      * where condition
@@ -49,16 +40,7 @@ open class DeleteBuilder<T : Any> : QueryConditionScope<T>, QueryMethodScope<T>,
     /**
      * where占位参数列表
      */
-    private var whereParams: Array<PrepareStatementParam> = emptyArray()
-
-    /**
-     * 设置要查询的表
-     *
-     * @param kClass 表对应的实体类引用
-     */
-    fun table(kClass: KClass<T>) {
-        table = kClass.table
-    }
+    private var whereParams: Array<Any?> = emptyArray()
 
     // where ==================================================
 
@@ -87,26 +69,28 @@ open class DeleteBuilder<T : Any> : QueryConditionScope<T>, QueryMethodScope<T>,
     // sql build ==================================================
 
     /**
-     * 拼接SQL
+     * 构建SQL，并返回SQL何占位参数
      *
-     * @return SQL
+     * @param table 表对应的实体类
+     * @return SQL和占位参数
      */
-    override fun build(): SQLWithParams {
+    override fun build(table: KClass<T>): Pair<String, Array<Any?>> {
         val sql = buildString {
-            when(FreshenRuntimeConfig.logicDelete){
+            when (FreshenRuntimeConfig.logicDelete) {
                 LogicDelete.Disable -> {
                     append("delete")
                     append(" ")
-                    append(table)
+                    append(table.table)
                     append(" ")
                     append(where)
                 }
+
                 is LogicDelete.Enable -> {
                     val logicDelete = FreshenRuntimeConfig.logicDelete as LogicDelete.Enable
                     val (columnName, _, deletedValue) = logicDelete
                     append("update")
                     append(" ")
-                    append(table)
+                    append(table.table)
                     append(" ")
                     append("set $columnName = $deletedValue")
                     append(" ")
@@ -115,6 +99,6 @@ open class DeleteBuilder<T : Any> : QueryConditionScope<T>, QueryMethodScope<T>,
             }
         }
         val params = arrayOf(*whereParams)
-        return SQLWithParams(sql, params)
+        return Pair(sql, params)
     }
 }

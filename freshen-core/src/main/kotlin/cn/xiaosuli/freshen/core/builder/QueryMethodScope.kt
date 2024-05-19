@@ -9,20 +9,20 @@
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * WI*HOU* WARRAN*IES OR CONDI*IONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
 
 package cn.xiaosuli.freshen.core.builder
 
-import cn.xiaosuli.freshen.core.utils.column
+import cn.xiaosuli.freshen.core.column
 import kotlin.reflect.KProperty1
 
 /**
  * mysql常用聚合函数
  */
-interface QueryMethodScope<T> {
+interface QueryMethodScope {
 
     /**
      * sql的count()函数
@@ -36,33 +36,33 @@ interface QueryMethodScope<T> {
      *
      * @return count(column)
      */
-    fun count(column: KProperty1<T, *>): String = "count(${column.column})"
+    fun count(column: KProperty1<*, *>): String = "count(${column.column})"
 
     /**
      * sql的sum()函数
      *
      * @return sum(column)
      */
-    fun sum(column: KProperty1<T, *>): String = "sum(${column.column})"
+    fun sum(column: KProperty1<*, *>): String = "sum(${column.column})"
 
     /**
      * sql的avg()函数
      *
      * @return avg(column)
      */
-    fun avg(column: KProperty1<T, *>): String = "avg(${column.column})"
+    fun avg(column: KProperty1<*, *>): String = "avg(${column.column})"
 
     /**
      * sql的max()函数
      *
      * @return max(column)
      */
-    fun max(column: KProperty1<T, *>): String = "max(${column.column})"
+    fun max(column: KProperty1<*, *>): String = "max(${column.column})"
 
     /**
      * sql的min()函数
      *
      * @return min(column)
      */
-    fun min(column: KProperty1<T, *>): String = "min(${column.column})"
+    fun min(column: KProperty1<*, *>): String = "min(${column.column})"
 }

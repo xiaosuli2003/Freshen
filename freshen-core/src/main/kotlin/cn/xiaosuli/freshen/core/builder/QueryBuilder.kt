@@ -16,16 +16,11 @@
 
 package cn.xiaosuli.freshen.core.builder
 
-import cn.xiaosuli.freshen.core.FreshenRuntimeConfig
 import cn.xiaosuli.freshen.core.anno.FreshenInternalApi
-import cn.xiaosuli.freshen.core.anno.Table
-import cn.xiaosuli.freshen.core.entity.PrepareStatementParam
-import cn.xiaosuli.freshen.core.entity.SQLWithParams
-import cn.xiaosuli.freshen.core.utils.column
-import cn.xiaosuli.freshen.core.utils.toUnderscore
+import cn.xiaosuli.freshen.core.column
+import cn.xiaosuli.freshen.core.table
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty1
-import kotlin.reflect.full.findAnnotation
 import kotlin.reflect.full.memberProperties
 
 /**
@@ -35,16 +30,11 @@ import kotlin.reflect.full.memberProperties
  * @param T 表对应的实体类
  */
 @FreshenInternalApi
-open class QueryBuilder<T : Any> : QueryConditionScope<T>, QueryMethodScope<T>, SQLBuilder {
+open class QueryBuilder<T : Any> : QueryConditionScope, QueryMethodScope, SQLBuilder<T> {
     /**
      * select [ column1, column2, ··· ]
      */
     var select = "select *"
-
-    /**
-     * from 表名
-     */
-    var from = ""
 
     /**
      * where condition
@@ -74,17 +64,17 @@ open class QueryBuilder<T : Any> : QueryConditionScope<T>, QueryMethodScope<T>, 
     /**
      * where占位参数列表
      */
-    private var whereParams: Array<PrepareStatementParam> = emptyArray()
+    private var whereParams: Array<Any?> = emptyArray()
 
     /**
      * having占位参数列表
      */
-    private var havingParams: Array<PrepareStatementParam> = emptyArray()
+    private var havingParams: Array<Any?> = emptyArray()
 
     /**
      * limit占位参数列表
      */
-    private var limitParams: Array<PrepareStatementParam> = emptyArray()
+    private var limitParams: Array<Any?> = emptyArray()
 
     // select ==================================================
 
@@ -165,51 +155,6 @@ open class QueryBuilder<T : Any> : QueryConditionScope<T>, QueryMethodScope<T>, 
      */
     val KClass<T>.all: List<KProperty1<T, *>>
         get() = memberProperties.toList()
-
-    // from ==================================================
-
-    /**
-     * 设置要查询的表
-     * * 请直接硬编码表名，不要通过外面传入，否则可能会导致SQL注入问题
-     * * 建议使用from<T>()和from(KClass)方法
-     *
-     * @param table 表名
-     */
-    fun from(table: String) {
-        from = "from $table"
-    }
-
-    /**
-     * 设置要查询的表
-     *
-     * @param kClass 表对应的实体类引用
-     */
-    fun from(kClass: KClass<T>) {
-        // 获取表名，如果有注解，则使用注解的值，否则走统一前缀
-        // 如果设置统一前缀，则标名为统一前缀+类名，否则直接使用类名
-        val table = kClass.findAnnotation<Table>()?.value
-            ?: FreshenRuntimeConfig.tablePrefix?.let {
-                "$it${kClass.simpleName!!.toUnderscore()}"
-            }
-            ?: kClass.simpleName!!.toUnderscore()
-        from = "from $table"
-    }
-
-    /**
-     * 设置要查询的表
-     *
-     * @param T 表对应的实体类引用
-     */
-    inline fun <reified T : Any> from() {
-        // 获取表名，如果有注解，则使用注解的值，否则走统一前缀
-        // 如果设置统一前缀，则标名为统一前缀+类名，否则直接使用类名
-        val table = T::class.findAnnotation<Table>()?.value
-            ?: FreshenRuntimeConfig.tablePrefix?.let {
-                "$it${T::class.simpleName!!.toUnderscore()}"
-            }
-            ?: T::class.simpleName!!.toUnderscore()
-        from = "from $table"
-    }
 
     // where ==================================================
 
@@ -323,10 +268,7 @@ open class QueryBuilder<T : Any> : QueryConditionScope<T>, QueryMethodScope<T>, 
     fun limit(pageSize: Long, pageNum: Long) {
         val offset = (pageNum - 1L) * pageSize
         limit = "limit ?, ?"
-        limitParams = arrayOf(
-            PrepareStatementParam(offset::class, offset),
-            PrepareStatementParam(pageSize::class, pageSize)
-        )
+        limitParams = arrayOf(offset, pageSize)
     }
 
     /**
@@ -336,21 +278,24 @@ open class QueryBuilder<T : Any> : QueryConditionScope<T>, QueryMethodScope<T>, 
      */
     fun limit(row: Long) {
         limit = "limit ?"
-        limitParams = arrayOf(PrepareStatementParam(Int::class, row))
+        limitParams = arrayOf(row)
     }
 
     // sql build ==================================================
 
     /**
-     * 拼接SQL
+     * 构建SQL，并返回SQL何占位参数
      *
-     * @return SQL
+     * @param table 表对应的实体类
+     * @return SQL和占位参数
      */
-    override fun build(): SQLWithParams {
+    override fun build(table: KClass<T>): Pair<String, Array<Any?>> {
         val sql = buildString {
             append(select)
             append(" ")
-            append(from)
+            append("from")
+            append(" ")
+            append(table.table)
             append(" ")
             append(where)
             append(" ")
@@ -363,6 +308,6 @@ open class QueryBuilder<T : Any> : QueryConditionScope<T>, QueryMethodScope<T>, 
             append(limit)
         }
         val params = arrayOf(*whereParams, *havingParams, *limitParams)
-        return SQLWithParams(sql, params)
+        return Pair(sql, params)
     }
 }

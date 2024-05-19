@@ -1,15 +1,15 @@
 package com.xiaosuli.test
 
 import cn.xiaosuli.freshen.core.crud.query
-import cn.xiaosuli.freshen.core.crud.queryAs
 import cn.xiaosuli.freshen.core.runFreshen
 import com.alibaba.druid.pool.DruidDataSource
 import javax.sql.DataSource
 
 fun main() {
     runFreshen(getDruidDataSource())
-    val studentList = query<Student>()
-    studentList.forEach(::println)
+    query<Student> {
+        select("id", "name", "gender")
+    }.forEach(::println)
 }
 
 private fun getDruidDataSource(): DataSource = DruidDataSource().apply {

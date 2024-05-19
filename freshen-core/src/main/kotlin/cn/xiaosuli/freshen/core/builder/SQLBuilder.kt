@@ -17,15 +17,19 @@
 package cn.xiaosuli.freshen.core.builder
 
 import cn.xiaosuli.freshen.core.anno.FreshenInternalApi
-import cn.xiaosuli.freshen.core.entity.SQLWithParams
+import kotlin.reflect.KClass
 
 /**
  * 最基本的SQL构造器
  */
 @FreshenInternalApi
-interface SQLBuilder {
+interface SQLBuilder<T : Any> {
+
     /**
-     * 构建SQL
+     * 构建SQL，并返回SQL何占位参数
+     *
+     * @param table 表对应的实体类
+     * @return SQL和占位参数
      */
-    fun build(): SQLWithParams
+    fun build(table: KClass<T>): Pair<String, Array<Any?>>
 }

@@ -34,8 +34,7 @@ inline fun <reified T : Any> delete(
     val start = System.currentTimeMillis()
     val deleteBuilder = DeleteBuilder<T>()
     init?.invoke(deleteBuilder)
-    deleteBuilder.table(T::class)
-    val (sql, params) = deleteBuilder.build()
+    val (sql, params) = deleteBuilder.build(T::class)
     FreshenRuntimeConfig.sqlAudit1(sql, params)
     return executeUpdate(sql, params, start, connection)
 }

@@ -13,19 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package cn.xiaosuli.freshen.core.entity
 
-import cn.xiaosuli.freshen.core.anno.FlexIdIsExperimentalApi
-import cn.xiaosuli.freshen.core.anno.FreshenExperimentalApi
-import cn.xiaosuli.freshen.core.anno.SnowflakeIdIsExperimentalApi
 import java.math.BigDecimal
 import java.math.BigInteger
 import java.sql.JDBCType
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
-import java.util.Date
+import java.util.*
 import javax.sql.DataSource
 import kotlin.reflect.KClass
 import kotlin.reflect.jvm.internal.impl.renderer.ClassifierNamePolicy.SHORT
@@ -53,8 +49,8 @@ data class FreshenConfig(
     val tablePrefix: String? = null,
     val enabledUnderscoreToCamelCase: Boolean = true,
     val kTypeAndJDBCTypeMap: Map<KClass<*>, JDBCType> = defaultKTypeAndJDBCTypeMap,
-    val sqlAudit1: (sql: String, params: Array<PrepareStatementParam>) -> Unit = { _, _ -> },
-    val sqlAudit2: (sql: String, params: Array<PrepareStatementParam>, elapsedTime: Long) -> Unit = { _, _, _ -> }
+    val sqlAudit1: (sql: String, params: Array<Any?>) -> Unit = { _, _ -> },
+    val sqlAudit2: (sql: String, params: Array<Any?>, elapsedTime: Long) -> Unit = { _, _, _ -> }
 )
 
 /**

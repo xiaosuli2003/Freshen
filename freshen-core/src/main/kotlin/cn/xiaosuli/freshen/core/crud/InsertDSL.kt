@@ -20,14 +20,7 @@ import cn.xiaosuli.freshen.core.FreshenRuntimeConfig
 import cn.xiaosuli.freshen.core.anno.FreshenInternalApi
 import cn.xiaosuli.freshen.core.anno.Id
 import cn.xiaosuli.freshen.core.entity.KeyGenerator
-import cn.xiaosuli.freshen.core.entity.PrepareStatementParam
-import cn.xiaosuli.freshen.core.keygen.FlexIDKeyGenerator
-import cn.xiaosuli.freshen.core.keygen.SnowFlakeIDKeyGenerator
-import cn.xiaosuli.freshen.core.keygen.UUIDKeyGenerator
-import cn.xiaosuli.freshen.core.utils.closeAndAudit
-import cn.xiaosuli.freshen.core.utils.column
-import cn.xiaosuli.freshen.core.utils.setParams
-import cn.xiaosuli.freshen.core.utils.table
+import cn.xiaosuli.freshen.core.setParams
 import java.sql.Connection
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty1
@@ -41,7 +34,7 @@ import kotlin.reflect.full.memberProperties
  * @param connection  数据库连接，默认为空，即不启用事务，如果传入，则使用事务
  * @return 受影响的行数
  */
-inline fun <reified T : Any> insert(
+/*inline fun <reified T : Any> insert(
     entity: T,
     connection: Connection? = null,
 ): Int {
@@ -106,7 +99,7 @@ inline fun <reified T : Any> insert(
     val sql = "insert into ${T::class.table} $columns values $values"
     // 执行insert语句，返回受影响的行数
     return executeUpdate(sql, params.toTypedArray(), start, connection)
-}
+}*/
 
 /**
  * 插入多条记录
@@ -114,7 +107,7 @@ inline fun <reified T : Any> insert(
  * @param entities 要插入的实体集合
  * @return 受影响的行数
  */
-inline fun <reified T : Any> insertBatch(vararg entities: T): Int = insertBatch(entities.toList())
+// inline fun <reified T : Any> insertBatch(vararg entities: T): Int = insertBatch(entities.toList())
 
 /**
  * 插入多条记录
@@ -123,7 +116,7 @@ inline fun <reified T : Any> insertBatch(vararg entities: T): Int = insertBatch(
  * @param entities 要插入的实体集合
  * @return 受影响的行数
  */
-inline fun <reified T : Any> insertBatch(entities: List<T>, connection: Connection? = null): Int {
+/*inline fun <reified T : Any> insertBatch(entities: List<T>, connection: Connection? = null): Int {
     // 如果集合为空，抛出异常
     if (entities.isEmpty()) throw IllegalArgumentException("批量插入的实体集合不能为空！")
     val enabledTransaction = connection != null
@@ -150,7 +143,7 @@ inline fun <reified T : Any> insertBatch(entities: List<T>, connection: Connecti
         }
         rows
     }
-}
+}*/
 
 /**
  * 获取实体类中的主键属性
@@ -194,7 +187,7 @@ fun <T : Any> KProperty1<T, *>.findKeyGenerator(): KeyGenerator {
 @Suppress("SqlSourceToSinkFlow")
 fun executeUpdate(
     sql: String,
-    params: Array<PrepareStatementParam>,
+    params: Array<Any?>,
     start: Long,
     connection: Connection? = null
 ): Int {
@@ -204,10 +197,11 @@ fun executeUpdate(
     val statement = conn.prepareStatement(sql)
     statement.setParams(params)
     val rows = statement.executeUpdate()
-    if (!enableTransaction) {
-        conn.closeAndAudit(statement, sql = sql, params = params, start = start)
-    } else {
-        FreshenRuntimeConfig.sqlAudit2(sql, params, System.currentTimeMillis() - start)
-    }
+    TODO("这里注释了部分代码")
+    // if (!enableTransaction) {
+    //     conn.closeAndAudit(statement, sql = sql, params = params, start = start)
+    // } else {
+    //     FreshenRuntimeConfig.sqlAudit2(sql, params, System.currentTimeMillis() - start)
+    // }
     return rows
 }
